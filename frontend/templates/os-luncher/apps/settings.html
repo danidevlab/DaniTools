@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>설정</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+body{
+    background:#f4f6fb;
+    color:#1f2937;
+}
+
+header{
+    padding:35px 20px;
+    text-align:center;
+    font-size:28px;
+    font-weight:700;
+}
+
+.container{
+    max-width:700px;
+    margin:auto;
+    padding:0 20px 30px;
+}
+
+.card{
+    background:#fff;
+    border-radius:16px;
+    padding:22px;
+    margin-bottom:18px;
+    box-shadow:0 8px 24px rgba(0,0,0,.08);
+    border:1px solid #ececec;
+}
+
+.card h2{
+    font-size:18px;
+    margin-bottom:8px;
+}
+
+.card p{
+    color:#6b7280;
+    font-size:14px;
+    margin-bottom:18px;
+}
+
+input[type=file]{
+    width:100%;
+    padding:10px;
+    border:2px dashed #cbd5e1;
+    border-radius:12px;
+    background:#fafafa;
+    cursor:pointer;
+    transition:.2s;
+}
+
+input[type=file]:hover{
+    border-color:#4f8cff;
+    background:#f5f9ff;
+}
+
+.button{
+    display:inline-block;
+    margin-top:10px;
+    padding:11px 18px;
+    background:#4f8cff;
+    color:white;
+    text-decoration:none;
+    border-radius:10px;
+    transition:.2s;
+    font-weight:600;
+}
+
+.button:hover{
+    background:#3877ef;
+    transform:translateY(-1px);
+}
+
+.footer{
+    text-align:center;
+    color:#888;
+    font-size:13px;
+    margin-top:25px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+⚙️ 설정
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h2>배경화면</h2>
+        <p>런처의 배경화면으로 사용할 이미지를 선택합니다.</p>
+
+        <input
+            type="file"
+            id="background-image-input"
+            accept="image/*">
+    </div>
+
+    <div class="card">
+        <h2>개발자</h2>
+        <p>로그 및 디버깅 도구를 실행합니다.</p>
+
+        <a class="button"
+           href="../debugging.html"
+           onclick="opendebuggingPage(); return false;">
+            디버깅 열기
+        </a>
+    </div>
+
+    <div class="footer">
+        2026 POLO LAUNCHER. All rights reserved.<br>
+        <a href="https://github.com/DaniAndPanda-DevLabs/POLO-LAUNCHER/blob/main/OPENSOURCE-LICENSE.md" target="_blank">오픈소스 라이선스</a>
+    </div>
+
+</div>
+
+<script>
+function logAppEvent(message) {
+    const timestamp = new Date().toISOString();
+    fetch(`http://localhost:6766/logwrite/?writedata=${encodeURIComponent(`[${timestamp}] ${message}`)}`);
+}
+
+logAppEvent("settings_page_loaded");
+
+const backgroundImageInput =
+    document.getElementById('background-image-input');
+
+backgroundImageInput.addEventListener('change', function(event) {
+
+    logAppEvent("settings_background_selected");
+
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        const imageUrl = e.target.result;
+
+        logAppEvent(`settings_background_uploaded_${file.name}`);
+
+        fetch('/api/set_background', {
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json'
+            },
+            body:JSON.stringify({
+                imageUrl:imageUrl
+            })
+        });
+
+    };
+
+    reader.readAsDataURL(file);
+});
+
+function opendebuggingPage(){
+    window.open(
+        "../debugging.html",
+        "eventPopup",
+        "width=1200,height=750,left=100,top=100"
+    );
+}
+</script>
+
+</body>
+</html>

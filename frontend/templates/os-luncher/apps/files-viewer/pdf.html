@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Neon PDF Viewer</title>
+<style>
+body{margin:0;height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);font-family:Segoe UI,sans-serif;color:#fff}
+.wrap{width:900px;padding:20px;border-radius:20px;background:rgba(255,255,255,.08);backdrop-filter:blur(15px);box-shadow:0 15px 40px rgba(0,0,0,.6)}
+canvas{width:100%;background:#fff;border-radius:12px}
+button{width:48px;height:48px;border:none;border-radius:50%;background:linear-gradient(135deg,#00f5ff,#ff00c8);color:#fff;margin:4px}
+.controls{display:flex;align-items:center;gap:8px;margin:10px 0}
+input[type=range]{flex:1}
+</style></head><body><div class=wrap>
+<canvas id=cv></canvas>
+<div class=controls>
+<button onclick="prev()">◀</button><span id=pg>0/0</span><button onclick="next()">▶</button>
+</div>
+<input id=f type=file accept="application/pdf">
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+<script type="module">
+import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+let pdf=null,page=1,scale=1;
+const c=cv,ctx=c.getContext('2d');
+f.onchange=async e=>{const file=e.target.files[0];if(!file)return;const buf=await file.arrayBuffer();pdf=await pdfjsLib.getDocument({data:buf}).promise;page=1;render();}
+async function render(){const p=await pdf.getPage(page);const vp=p.getViewport({scale});c.width=vp.width;c.height=vp.height;await p.render({canvasContext:ctx,viewport:vp}).promise;pg.textContent=page+'/'+pdf.numPages;}
+window.prev=()=>{if(pdf&&page>1){page--;render();}}
+window.next=()=>{if(pdf&&page<pdf.numPages){page++;render();}}
+z.oninput=()=>{scale=parseFloat(z.value);sv.textContent=scale.toFixed(1)+'x';if(pdf)render();}
+</script></body></html>

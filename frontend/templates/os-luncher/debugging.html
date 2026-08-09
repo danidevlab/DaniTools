@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<head>
+  <title>POLO debugging</title>
+  <meta charset="utf-8">
+</head>
+<body>
+<div id="info"></div>
+
+<script>
+const info = document.getElementById("info");
+
+fetch('https://api.ipify.org')
+  .then(r => r.text())
+  .then(ip => {
+    info.innerHTML =
+      `----POLO LAUNCHER DEBUGGING----<br>
+      가로: ${screen.width}px<br>
+       세로: ${screen.height}px<br>
+       브라우저: ${navigator.userAgent}<br>
+       RAM: ${navigator.deviceMemory}<br>
+       CPU: ${navigator.hardwareConcurrency}<br>
+       IP: ${ip}<br>
+       
+       버전: V1.0.0 BETA (release 2)<br>
+       버전: ${navigator.appVersion}<br>
+       에디션: POLO-LAUNCHER_BETA(channel canary)<br>`;
+  });
+</script>
+</body>
+</html>

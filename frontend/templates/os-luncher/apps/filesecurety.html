@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>파일 암호화/복호화</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+body{
+    background:#0f172a;
+    color:#fff;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.container{
+    width:100%;
+    max-width:550px;
+    background:#1e293b;
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0 10px 30px rgba(0,0,0,.3);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.box{
+    background:#334155;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:20px;
+}
+
+input[type=file],
+input[type=password]{
+    width:100%;
+    margin-top:10px;
+    margin-bottom:15px;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#475569;
+    color:white;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:16px;
+    margin-top:10px;
+    color:white;
+    background:#2563eb;
+    transition:.2s;
+}
+
+button:hover{
+    transform:translateY(-2px);
+}
+
+.decryptBtn{
+    background:#16a34a;
+}
+
+.status{
+    margin-top:20px;
+    text-align:center;
+    color:#93c5fd;
+    min-height:24px;
+}
+
+small{
+    color:#94a3b8;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🔐 파일 암호화 도구</h1>
+
+    <div class="box">
+        <label>파일 선택</label>
+        <input type="file" id="file">
+
+        <label>비밀번호</label>
+        <input type="password" id="password" placeholder="비밀번호 입력">
+
+        <button onclick="encryptFile()">암호화</button>
+        <button class="decryptBtn" onclick="decryptFile()">복호화</button>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <small>
+        암호화 방식: AES-256-GCM<br>
+        비밀번호를 잊어버리면 복호화가 불가능할 수 있습니다.<br>
+        업로드한 파일은 서버에 저장되지 않으며, 브라우저에서만 처리됩니다.
+    </small>
+
+</div>
+
+<script>
+function logAppEvent(message) {
+    const timestamp = new Date().toISOString();
+    fetch(`http://localhost:6766/logwrite/?writedata=${encodeURIComponent(`[${timestamp}] ${message}`)}`);
+}
+
+const statusEl = document.getElementById("status");
+logAppEvent("filesecurety_page_loaded");
+
+function setStatus(msg){
+    statusEl.textContent = msg;
+}
+
+async function deriveKey(password, salt){
+    const encoder = new TextEncoder();
+
+    const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(password),
+        "PBKDF2",
+        false,
+        ["deriveKey"]
+    );
+
+    return crypto.subtle.deriveKey(
+        {
+            name:"PBKDF2",
+            salt:salt,
+            iterations:250000,
+            hash:"SHA-256"
+        },
+        keyMaterial,
+        {
+            name:"AES-GCM",
+            length:256
+        },
+        false,
+        ["encrypt","decrypt"]
+    );
+}
+
+function formatBytes(bytes){
+    const mb = bytes / 1024 / 1024;
+    return mb.toFixed(1) + "MB";
+}
+
+async function readFileWithProgress(file, onProgress){
+    const reader = file.stream().getReader();
+    const chunks = [];
+    let loaded = 0;
+    const total = file.size;
+
+    while(true){
+        const {done, value} = await reader.read();
+        if(done) break;
+        chunks.push(value);
+        loaded += value.byteLength;
+        onProgress?.(loaded, total);
+    }
+
+    const result = new Uint8Array(loaded);
+    let offset = 0;
+
+    for(const chunk of chunks){
+        result.set(chunk, offset);
+        offset += chunk.byteLength;
+    }
+
+    return result.buffer;
+}
+
+async function encryptFile(){
+    logAppEvent("filesecurety_encrypt_started");
+    const file = document.getElementById("file").files[0];
+    const password = document.getElementById("password").value;
+
+    if(!file) return setStatus("파일을 선택하세요.");
+    if(!password) return setStatus("비밀번호를 입력하세요.");
+
+    try{
+        setStatus(`암호화 중(0MB/${formatBytes(file.size)})`);
+
+        const data = await readFileWithProgress(file, (loaded, total) => {
+            setStatus(`암호화 중(${formatBytes(loaded)}/${formatBytes(total)})`);
+        });
+
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+
+        const key = await deriveKey(password, salt);
+
+        const encrypted = await crypto.subtle.encrypt(
+            {name:"AES-GCM", iv},
+            key,
+            data
+        );
+
+        // [salt(16)][iv(12)][cipher]
+        const result = new Uint8Array(
+            salt.length + iv.length + encrypted.byteLength
+        );
+
+        result.set(salt, 0);
+        result.set(iv, salt.length);
+        result.set(
+            new Uint8Array(encrypted),
+            salt.length + iv.length
+        );
+
+        const blob = new Blob([result]);
+
+        downloadBlob(blob, file.name + ".enc");
+
+        setStatus("암호화 완료!");
+        logAppEvent(`filesecurety_encrypt_completed_${file.name}`);
+    }catch(err){
+        console.error(err);
+        setStatus("암호화 실패");
+        logAppEvent(`filesecurety_encrypt_failed_${file?.name || "unknown"}`);
+    }
+}
+
+async function decryptFile(){
+    logAppEvent("filesecurety_decrypt_started");
+    const file = document.getElementById("file").files[0];
+    const password = document.getElementById("password").value;
+
+    if(!file) return setStatus("암호화된 파일을 선택하세요.");
+    if(!password) return setStatus("비밀번호를 입력하세요.");
+
+    try{
+        setStatus(`복호화 중(0MB/${formatBytes(file.size)})`);
+
+        const data = new Uint8Array(await readFileWithProgress(file, (loaded, total) => {
+            setStatus(`복호화 중(${formatBytes(loaded)}/${formatBytes(total)})`);
+        }));
+
+        const salt = data.slice(0,16);
+        const iv = data.slice(16,28);
+        const encrypted = data.slice(28);
+
+        const key = await deriveKey(password, salt);
+
+        const decrypted = await crypto.subtle.decrypt(
+            {
+                name:"AES-GCM",
+                iv
+            },
+            key,
+            encrypted
+        );
+
+        let outputName = file.name;
+
+        if(outputName.endsWith(".enc")){
+            outputName = outputName.slice(0,-4);
+        }else{
+            outputName = "decrypted_" + outputName;
+        }
+
+        const blob = new Blob([decrypted]);
+
+        downloadBlob(blob, outputName);
+
+        setStatus("복호화 완료!");
+        logAppEvent(`filesecurety_decrypt_completed_${file.name}`);
+    }catch(err){
+        console.error(err);
+        setStatus("복호화 실패 (비밀번호가 틀렸거나 파일이 손상됨)");
+        logAppEvent(`filesecurety_decrypt_failed_${file?.name || "unknown"}`);
+    }
+}
+
+function downloadBlob(blob, filename){
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+
+    setTimeout(()=>{
+        URL.revokeObjectURL(url);
+    },1000);
+}
+</script>
+
+</body>
+</html>

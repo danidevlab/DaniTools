@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Predict AI Setting</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:#0d1117;
+    overflow:hidden;
+    color:white;
+}
+
+.slider{
+    display:flex;
+    width:400%;
+    height:100vh;
+    transition:transform .5s ease;
+}
+
+.slide{
+    width:100vw;
+    height:100vh;
+    flex-shrink:0;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:40px;
+}
+
+.slide h1{
+    font-size:56px;
+    margin-bottom:20px;
+}
+
+.slide p{
+    max-width:700px;
+    color:#9aa4b2;
+    font-size:20px;
+    line-height:1.8;
+}
+
+.icon{
+    font-size:90px;
+    margin-bottom:30px;
+}
+
+.slide:nth-child(1){
+    background:linear-gradient(135deg,#10151d,#161d2b);
+}
+
+.slide:nth-child(2){
+    background:linear-gradient(135deg,#121826,#1b2440);
+}
+
+.slide:nth-child(3){
+    background:linear-gradient(135deg,#13141f,#25283a);
+}
+
+.slide:nth-child(4){
+    background:linear-gradient(135deg,#141722,#1d2e4f);
+}
+
+.slide label{
+    display:block;
+    margin:15px 0;
+    cursor:pointer;
+}
+
+.slide input[type=text],
+.slide input[type=number]{
+    width:320px;
+    padding:12px;
+    margin:8px 0;
+    border:none;
+    border-radius:10px;
+    background:#1f2937;
+    color:white;
+    font-size:16px;
+}
+
+.controls{
+    position:fixed;
+    bottom:40px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:10px;
+}
+
+.dot{
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    background:#4b5563;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.dot.active{
+    background:#4f8cff;
+    width:30px;
+    border-radius:999px;
+}
+
+.buttons{
+    position:fixed;
+    bottom:30px;
+    right:40px;
+}
+
+button{
+    border:none;
+    cursor:pointer;
+    border-radius:12px;
+    padding:14px 28px;
+    font-size:16px;
+}
+
+.next{
+    background:#4f8cff;
+    color:white;
+}
+
+.start{
+    display:none;
+    background:#22c55e;
+    color:white;
+}
+</style>
+</head>
+<body>
+
+<div class="slider" id="slider">
+
+    <section class="slide">
+        <div class="icon">🤖</div>
+        <h1>Hello!</h1>
+        <p>
+            안녕하세요! 저는 Predict AI입니다.<br>
+            함께 시작해 볼까요?
+        </p>
+    </section>
+
+    <section class="slide">
+        <div class="icon">📜</div>
+        <h1>이용약관 동의</h1>
+
+        AI의 오류 또는 오작동으로 인해 발생하는 문제<br>에 대해
+        제작자는 책임이 없습니다.<br>
+        <br>
+        <label>
+
+            <input type="radio" name="terms" value="agree">
+            동의합니다.
+        </label>
+        <label>
+            <input type="radio" name="terms" value="disagree">
+            동의하지 않습니다.
+        </label>
+    </section>
+
+    <section class="slide">
+        <div class="icon">⚙️</div>
+        <h1>AI 개인화하기</h1>
+
+        <p>
+            정보는 외부로 전송되지 않고 이 기기에만 저장됩니다.
+        </p>
+
+        <br>
+
+        <input type="text" name="name" placeholder="이름">
+        <input type="number" name="age" placeholder="나이">
+        <input type="text" name="occupation" placeholder="직업">
+        <input type="text" name="likes" placeholder="좋아하는 것">
+        <input type="text" name="skills" placeholder="잘하는 것">
+        <input type="text" name="tone" placeholder="원하는 말투">
+
+        <br>
+
+        <strong>
+            입력하지 않아도 기본 설정으로 작동합니다.
+        </strong>
+    </section>
+
+    <section class="slide">
+        <div class="icon">🚀</div>
+        <h1>완료되었습니다!</h1>
+
+        <p>
+            지금 바로 시작해 볼까요?
+        </p>
+    </section>
+
+</div>
+
+<div class="controls">
+    <div class="dot active"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+</div>
+
+<div class="buttons">
+    <button class="next" id="nextBtn">
+        Next →
+    </button>
+
+    <button class="start" id="startBtn">
+        시작하기 ➡️
+    </button>
+</div>
+
+<script>
+function logAppEvent(message) {
+const timestamp = new Date().toISOString();
+fetch(`http://localhost:6766/logwrite/?writedata=${encodeURIComponent(`[${timestamp}] ${message}`)}`);
+}
+
+logAppEvent('predict_welcome_page_loaded');
+
+const slider = document.getElementById("slider");
+const dots = document.querySelectorAll(".dot");
+
+const nextBtn = document.getElementById("nextBtn");
+const startBtn = document.getElementById("startBtn");
+
+let current = 0;
+
+function updateSlider(){
+
+    slider.style.transform =
+        `translateX(-${current * 100}vw)`;
+
+    dots.forEach((dot,index)=>{
+        dot.classList.toggle(
+            "active",
+            index === current
+        );
+    });
+
+    if(current === 3){
+        nextBtn.style.display = "none";
+        startBtn.style.display = "inline-block";
+    }else{
+        nextBtn.style.display = "inline-block";
+        startBtn.style.display = "none";
+    }
+}
+
+nextBtn.addEventListener("click",()=>{
+    logAppEvent(`predict_welcome_next_${current}`);
+
+    // 이용약관 페이지 검사
+    if(current === 1){
+
+        const checked =
+            document.querySelector('input[name="terms"]:checked');
+
+        if(!checked){
+            alert("이용약관 동의 여부를 선택해주세요.");
+            return;
+        }
+
+        if(checked.value === "disagree"){
+            alert("서비스를 이용하려면 이용약관에 동의해야 합니다.");
+            return;
+        }
+    }
+
+    if(current < 3){
+        current++;
+        updateSlider();
+    }
+});
+
+dots.forEach((dot,index)=>{
+    dot.addEventListener("click",()=>{
+        logAppEvent(`predict_welcome_dot_${index}`);
+
+        // 이용약관 미동의 상태에서 다음 페이지 이동 방지
+        if(index > 1){
+
+            const checked =
+                document.querySelector('input[name="terms"]:checked');
+
+            if(!checked){
+                alert("이용약관에 동의해주세요.");
+                return;
+            }
+
+            if(checked.value === "disagree"){
+                alert("서비스를 이용하려면 이용약관에 동의해야 합니다.");
+                return;
+            }
+        }
+
+        current = index;
+        updateSlider();
+    });
+});
+
+startBtn.addEventListener("click",()=>{
+    logAppEvent('predict_welcome_start_clicked');
+
+    const userData = {
+        name:document.querySelector('[name="name"]').value,
+        age:document.querySelector('[name="age"]').value,
+        occupation:document.querySelector('[name="occupation"]').value,
+        likes:document.querySelector('[name="likes"]').value,
+        skills:document.querySelector('[name="skills"]').value,
+        tone:document.querySelector('[name="tone"]').value
+    };
+
+    localStorage.setItem(
+        "predict_ai_profile",
+        JSON.stringify(userData)
+    );
+
+    window.location.href = "./chat.html";
+});
+</script>
+
+</body>
+</html>

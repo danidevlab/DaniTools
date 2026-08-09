@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Viewer Launcher</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Segoe UI",sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+    overflow:hidden;
+}
+
+.container{
+    width:900px;
+    padding:40px;
+    border-radius:25px;
+    background:rgba(255,255,255,.08);
+    backdrop-filter:blur(15px);
+    box-shadow:0 15px 40px rgba(0,0,0,.6);
+    text-align:center;
+}
+
+h1{
+    color:white;
+    margin-bottom:10px;
+}
+
+p{
+    color:#d8d8d8;
+    margin-bottom:35px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:25px;
+}
+
+.card{
+    height:170px;
+    border-radius:20px;
+    cursor:pointer;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.1);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    transition:.3s;
+    color:white;
+}
+
+.card:hover{
+    transform:translateY(-8px) scale(1.03);
+    box-shadow:0 0 25px #00f5ff;
+    border-color:#00f5ff;
+}
+
+.icon{
+    font-size:55px;
+    margin-bottom:15px;
+}
+
+.title{
+    font-size:22px;
+    font-weight:bold;
+}
+
+.desc{
+    font-size:14px;
+    opacity:.8;
+    margin-top:6px;
+}
+
+.footer{
+    margin-top:30px;
+    color:#aaa;
+    font-size:14px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>📂 Universal Viewer</h1>
+<p>열고 싶은 뷰어를 선택하세요.</p>
+
+<div class="grid">
+
+<div class="card" onclick="openViewer('image')">
+<div class="icon">🖼️</div>
+<div class="title">Image Viewer</div>
+<div class="desc">PNG · JPG · GIF · WebP · SVG</div>
+</div>
+
+<div class="card" onclick="openViewer('pdf')">
+<div class="icon">📄</div>
+<div class="title">PDF Viewer</div>
+<div class="desc">PDF.js 기반</div>
+</div>
+
+<div class="card" onclick="openViewer('mp3')">
+<div class="icon">🎵</div>
+<div class="title">MP3 Player</div>
+<div class="desc">오디오 플레이어</div>
+</div>
+
+<div class="card" onclick="openViewer('mp4')">
+<div class="icon">🎬</div>
+<div class="title">MP4 Player</div>
+<div class="desc">비디오 플레이어</div>
+</div>
+
+</div>
+
+<div class="footer">
+Version 1.0
+</div>
+
+</div>
+
+<script>
+
+function openViewer(type){
+
+    switch(type){
+
+        case "image":
+            location.href="./img.html";
+            break;
+
+        case "pdf":
+            location.href="./pdf.html";
+            break;
+
+        case "mp3":
+            location.href="./mp3.html";
+            break;
+
+        case "mp4":
+            location.href="./mp4.html";
+            break;
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>

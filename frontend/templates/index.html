@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>POLO Luncher Booting</title>
+<style>
+    body {
+        background-color: #1a1a1a;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        color: #eee;
+        font-family: Arial, sans-serif;
+    }
+
+    .boot-container {
+        text-align: center;
+    }
+
+    .progress-bar {
+        width: 300px;
+        height: 10px;
+        background-color: #333;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background-color: #2ecc71;
+        width: 0%;
+        animation: load 5s forwards; /* 5초 동안 로딩 */
+    }
+
+    @keyframes load {
+        0% { width: 0%; }
+        100% { width: 100%; }
+    }
+</style>
+<noscript>
+    <div style="background-color: #ffcccc; padding: 15px; text-align: center; font-weight: bold; color: #cc0000;">
+        현재 브라우저에서 자바스크립트가 차단되어 있습니다. 
+        POLO LUNCHER를 이용하시려면 자바스크립트를 활성화해 주세요.
+    </div>
+</noscript>
+</head>
+<body>
+    <div class="boot-container">
+        <h2>✨POLO LAUNCHER✨</h2>
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+    </div>
+    <script>
+        fetch("http://localhost:6766/logwrite/?writedata=launcherboot_opened");
+        // 5초 후에 OS 런처 페이지로 이동
+        setTimeout(function() {
+        fetch("http://localhost:6766/logwrite/?writedata=launcherboot_direct_success");
+        window.location.href = './os-luncher/welcome/index.html';
+        }, 5000);
+    </script>
+</body>
+</html>

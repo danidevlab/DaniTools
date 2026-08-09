@@ -1,0 +1,30 @@
+<!doctype html><html lang='ko'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Neon MP4 Player</title>
+<style>
+body{margin:0;height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);font-family:Segoe UI,sans-serif;color:#fff}
+.player{width:900px;background:rgba(255,255,255,.08);padding:24px;border-radius:22px;backdrop-filter:blur(15px);box-shadow:0 15px 40px rgba(0,0,0,.6)}
+video{width:100%;border-radius:16px;background:#000}
+.controls{display:flex;gap:8px;align-items:center;margin-top:12px}.controls button{width:48px;height:48px;border:none;border-radius:50%;background:linear-gradient(135deg,#00f5ff,#ff00c8);color:#fff}
+input[type=range]{flex:1}
+</style>
+<div class=player>
+<video id=v></video>
+<div class=controls>
+<button onclick=prev()>⏮</button><button onclick="v.play()">▶</button><button onclick="v.pause()">⏸</button><button onclick=next()>⏭</button>
+<input id=p type=range value=0 min=0 step=0.1><span id=t>00:00/00:00</span>
+</div>
+<div class=controls><label>배속</label><input id=s type=range min=.25 max=3 step=.25 value=1><span id=sv>1.00x</span><button onclick="v.requestFullscreen()">⛶</button></div>
+<input id=f type=file accept="video/mp4,video/*" multiple><div id=n>파일 선택</div>
+<script>
+let files=[],i=0;
+f.onchange=e=>{files=[...e.target.files];if(files.length)load(0)}
+function load(x){i=x;v.src=URL.createObjectURL(files[x]);n.textContent=files[x].name;v.load()}
+function prev(){if(i>0){load(i-1);v.play()}}
+function next(){if(i<files.length-1){load(i+1);v.play()}}
+v.onloadedmetadata=()=>{p.max=v.duration;upd()}
+v.ontimeupdate=()=>{p.value=v.currentTime;upd()}
+p.oninput=()=>v.currentTime=p.value;
+s.oninput=()=>{v.playbackRate=s.value;sv.textContent=(+s.value).toFixed(2)+'x'}
+v.onended=()=>next();
+function fmt(x){if(!isFinite(x))return"00:00";let m=(x/60)|0,s=(x%60)|0;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
+function upd(){t.textContent=fmt(v.currentTime)+'/'+fmt(v.duration)}
+</script>

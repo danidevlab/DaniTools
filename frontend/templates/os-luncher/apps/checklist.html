@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>프리미엄 체크리스트</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 16px;
+    }
+
+    .container {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 560px;
+      padding: 36px 32px;
+      position: relative;
+    }
+
+    header {
+      margin-bottom: 28px;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #1a202c;
+      letter-spacing: -0.5px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #saveStatus {
+      font-size: 0.75rem;
+      color: #48bb78;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #saveStatus.show {
+      opacity: 1;
+    }
+
+    header p {
+      margin-top: 6px;
+      font-size: 0.875rem;
+      color: #718096;
+    }
+
+    .progress-bar-wrap {
+      margin-top: 14px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    .progress-label {
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: #a0aec0;
+      text-align: right;
+    }
+
+    /* 항목 추가 영역 */
+    .add-area {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .add-area input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: #2d3748;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .add-area input:focus {
+      border-color: #667eea;
+    }
+
+    .add-area button {
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+
+    .add-area button:hover {
+      opacity: 0.88;
+    }
+
+    /* 필터 및 관리 탭 */
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter-tabs button {
+      padding: 5px 12px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 999px;
+      background: transparent;
+      font-size: 0.75rem;
+      color: #718096;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-tabs button.active {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-color: transparent;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .storage-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .storage-actions button {
+      padding: 4px 8px;
+      border: none;
+      background: #edf2f7;
+      color: #4a5568;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .storage-actions button:hover {
+      background: #e2e8f0;
+    }
+
+    /* 체크리스트 */
+    #checklist {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: #f7fafc;
+      border-radius: 10px;
+      border: 1.5px solid #e2e8f0;
+      transition: background 0.2s, border-color 0.2s;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .item:hover {
+      border-color: #c3cfff;
+      background: #eef2ff;
+    }
+
+    .item.done {
+      background: #f0fff4;
+      border-color: #c6f6d5;
+    }
+
+    .item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #667eea;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .item-text {
+      flex: 1;
+      font-size: 0.92rem;
+      color: #2d3748;
+      word-break: break-word;
+      transition: color 0.2s;
+    }
+
+    .item.done .item-text {
+      text-decoration: line-through;
+      color: #a0aec0;
+    }
+
+    .item-delete {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #cbd5e0;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .item-delete:hover {
+      color: #e53e3e;
+      background: #fff5f5;
+    }
+
+    .empty-msg {
+      text-align: center;
+      color: #a0aec0;
+      font-size: 0.88rem;
+      padding: 32px 0;
+    }
+
+    /* 하단 액션 */
+    .footer-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .footer-actions span {
+      font-size: 0.8rem;
+      color: #a0aec0;
+    }
+
+    .footer-actions .danger-zone {
+      display: flex;
+      gap: 12px;
+    }
+
+    .footer-actions button {
+      background: none;
+      border: none;
+      font-size: 0.8rem;
+      color: #e53e3e;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .footer-actions button:hover {
+      background: #fff5f5;
+    }
+
+    /* 숨겨진 파일 입력 */
+    #importFile {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-top">
+        <h1>✅ 체크리스트</h1>
+        <span id="saveStatus">데이터 저장됨</span>
+      </div>
+      <p>오늘 해야 할 일들을 관리하세요.</p>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-label" id="progressLabel">0 / 0 완료</div>
+    </header>
+
+    <div class="add-area">
+      <input type="text" id="newItemInput" placeholder="새 항목 입력 후 Enter 또는 추가 클릭" maxlength="100" />
+      <button onclick="addItem()">+ 추가</button>
+    </div>
+
+    <div class="controls">
+      <div class="filter-tabs">
+        <button class="active" onclick="setFilter('all', this)">전체</button>
+        <button onclick="setFilter('active', this)">미완료</button>
+        <button onclick="setFilter('done', this)">완료</button>
+      </div>
+      <div class="storage-actions">
+        <button onclick="exportData()" title="파일로 내보내기">내보내기</button>
+        <button onclick="document.getElementById('importFile').click()" title="파일에서 불러오기">불러오기</button>
+        <input type="file" id="importFile" accept=".json" onchange="importData(event)" />
+      </div>
+    </div>
+
+    <ul id="checklist"></ul>
+    <p class="empty-msg" id="emptyMsg">항목이 없습니다. 위에서 추가해 보세요!</p>
+
+    <div class="footer-actions">
+      <span id="remainCount">남은 항목: 0개</span>
+      <div class="danger-zone">
+        <button onclick="clearDone()">완료 삭제</button>
+        <button onclick="resetAll()" style="color: #718096;">초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function logAppEvent(message) {
+      const timestamp = new Date().toISOString();
+      fetch(`http://localhost:6766/logwrite/?writedata=${encodeURIComponent(`[${timestamp}] ${message}`)}`);
+    }
+
+    logAppEvent('checklist_page_loaded');
+
+    const STORAGE_KEY = 'checklist_v2_items';
+    const DEFAULT_ITEMS = [
+      { text: '아침 운동하기', done: false },
+      { text: '이메일 확인', done: false },
+      { text: '치킨 먹기', done: false },
+      { text: '점심 식사', done: false },
+      { text: '보고서 작성', done: false },
+    ];
+
+    let items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || DEFAULT_ITEMS;
+    let currentFilter = 'all';
+
+    // 캐시 저장 기능 (localStorage)
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      showSaveIndicator();
+    }
+
+    function showSaveIndicator() {
+      const status = document.getElementById('saveStatus');
+      status.classList.add('show');
+      setTimeout(() => {
+        status.classList.remove('show');
+      }, 1500);
+    }
+
+    // 데이터 내보내기 (JSON 파일)
+    function exportData() {
+      logAppEvent('checklist_export_clicked');
+      const dataStr = JSON.stringify(items, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = 'checklist_backup_' + new Date().toISOString().slice(0, 10) + '.json';
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+    }
+
+    // 데이터 불러오기
+    function importData(event) {
+      logAppEvent('checklist_import_started');
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedItems = JSON.parse(e.target.result);
+          if (Array.isArray(importedItems)) {
+            if (confirm('기존 데이터를 덮어쓰고 불러오시겠습니까?')) {
+              items = importedItems;
+              save();
+              render();
+            }
+          } else {
+            alert('유효한 체크리스트 파일이 아닙니다.');
+          }
+        } catch (err) {
+          alert('파일을 읽는 중 오류가 발생했습니다.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = ''; // 초기화
+    }
+
+    // 전체 초기화
+    function resetAll() {
+      logAppEvent('checklist_reset_clicked');
+      if (confirm('모든 데이터를 삭제하고 초기 상태로 되돌리시겠습니까?')) {
+        items = [...DEFAULT_ITEMS];
+        save();
+        render();
+      }
+    }
+
+    function render() {
+      const list = document.getElementById('checklist');
+      const emptyMsg = document.getElementById('emptyMsg');
+      list.innerHTML = '';
+
+      const filtered = items.filter(item => {
+        if (currentFilter === 'active') return !item.done;
+        if (currentFilter === 'done')   return item.done;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        emptyMsg.style.display = 'block';
+      } else {
+        emptyMsg.style.display = 'none';
+        filtered.forEach((item, filteredIdx) => {
+          const realIdx = items.indexOf(item);
+          const li = document.createElement('li');
+          li.className = 'item' + (item.done ? ' done' : '');
+
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = item.done;
+          cb.addEventListener('change', () => toggleItem(realIdx));
+
+          const span = document.createElement('span');
+          span.className = 'item-text';
+          span.textContent = item.text;
+
+          const del = document.createElement('button');
+          del.className = 'item-delete';
+          del.textContent = '✕';
+          del.title = '삭제';
+          del.addEventListener('click', () => deleteItem(realIdx));
+
+          li.appendChild(cb);
+          li.appendChild(span);
+          li.appendChild(del);
+          list.appendChild(li);
+        });
+      }
+
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const total = items.length;
+      const done  = items.filter(i => i.done).length;
+      const pct   = total === 0 ? 0 : Math.round((done / total) * 100);
+
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent = `${done} / ${total} 완료 (${pct}%)`;
+      document.getElementById('remainCount').textContent = `남은 항목: ${total - done}개`;
+    }
+
+    function addItem() {
+      logAppEvent('checklist_add_item_clicked');
+      const input = document.getElementById('newItemInput');
+      const text = input.value.trim();
+      if (!text) return;
+      items.push({ text, done: false });
+      save();
+      render();
+      input.value = '';
+      input.focus();
+    }
+
+    function toggleItem(idx) {
+      logAppEvent(`checklist_toggle_item_${idx}`);
+      items[idx].done = !items[idx].done;
+      save();
+      render();
+    }
+
+    function deleteItem(idx) {
+      logAppEvent(`checklist_delete_item_${idx}`);
+      items.splice(idx, 1);
+      save();
+      render();
+    }
+
+    function clearDone() {
+      logAppEvent('checklist_clear_done_clicked');
+      if (items.some(i => i.done)) {
+        items = items.filter(i => !i.done);
+        save();
+        render();
+      }
+    }
+
+    function setFilter(filter, btn) {
+      logAppEvent(`checklist_filter_${filter}`);
+      currentFilter = filter;
+      document.querySelectorAll('.filter-tabs button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    }
+
+    document.getElementById('newItemInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        logAppEvent('checklist_enter_add_item');
+        addItem();
+      }
+    });
+
+    // 초기 렌더링
+    render();
+  </script>
+</body>
+</html>

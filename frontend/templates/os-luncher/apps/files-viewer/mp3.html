@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>럭셔리 MP3 뷰어(테크놀로지)</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .player {
+      background: rgba(255,255,255,0.08);
+      border-radius: 25px;
+      padding: 40px;
+      width: 420px;
+      text-align: center;
+      backdrop-filter: blur(15px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+      animation: fadeIn 1.5s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .controls button {
+      background: linear-gradient(135deg, #00f5ff, #ff00c8);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 22px;
+      margin: 10px;
+      width: 55px;
+      height: 55px;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 0 15px rgba(0,245,255,0.6);
+    }
+    .controls button:hover {
+      transform: scale(1.2) rotate(5deg);
+      box-shadow: 0 0 25px rgba(255,0,200,0.8);
+    }
+    .visualizer {
+      width: 100%;
+      height: 120px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      margin-bottom: 25px;
+      overflow: hidden;
+      position: relative;
+      animation: glow 3s infinite alternate;
+    }
+    @keyframes glow {
+      from { box-shadow: 0 0 15px #00f5ff; }
+      to { box-shadow: 0 0 30px #ff00c8; }
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+    }
+    input[type="file"] {
+      margin-top: 20px;
+      color: #fff;
+    }
+    #trackName {
+      margin-top: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { color: #fff; }
+      50% { color: #00f5ff; }
+      100% { color: #ff00c8; }
+    }
+    .progress-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 15px;
+      color: #fff;
+    }
+    #progressBar {
+      flex: 1;
+      margin: 0 10px;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 5px;
+      background: linear-gradient(90deg, #00f5ff, #ff00c8);
+      cursor: pointer;
+    }
+    #progressBar::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 5px #ff00c8;
+    }
+    .speed-container {
+      margin-top: 20px;
+      text-align: center;
+      color: #fff;
+    }
+    #speedRange {
+      width: 100%;
+      margin-top: 10px;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 5px;
+      background: linear-gradient(90deg, #ff00c8, #00f5ff);
+      cursor: pointer;
+    }
+    #speedRange::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 5px #00f5ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="player">
+    <div class="visualizer">
+      <canvas id="canvas"></canvas>
+    </div>
+    <div class="progress-container">
+      <span id="currentTime">00:00</span>
+      <input type="range" id="progressBar" value="0" step="1">
+      <span id="duration">00:00</span>
+    </div>
+    <div class="controls">
+      <button id="prev">⏮️</button>
+      <button id="play">▶️</button>
+      <button id="pause">⏸️</button>
+      <button id="next">⏭️</button>
+    </div>
+    <input type="file" id="fileInput" accept="audio/mp3" multiple />
+    <p id="trackName">파일을 선택하세요</p>
+    <div class="speed-container">
+      <label for="speedRange">배속: <span id="speedValue">1.0x</span></label>
+      <input type="range" id="speedRange" min="0.25" max="3" step="0.05" value="1">
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const playBtn = document.getElementById('play');
+    const pauseBtn = document.getElementById('pause');
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+    const trackName = document.getElementById('trackName');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const progressBar = document.getElementById('progressBar');
+    const currentTimeEl = document.getElementById('currentTime');
+    const durationEl = document.getElementById('duration');
+    const speedRange = document.getElementById('speedRange');
+    const speedValue = document.getElementById('speedValue');
+
+    let audio = new Audio();
+    let files = [];
+    let currentIndex = 0;
+    let audioCtx, analyser, source;
+    let animationId = null;
+    let playbackRate = 1;
+
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    fileInput.addEventListener('change', (e) => {
+      files = Array.from(e.target.files);
+      if (files.length > 0) {
+        loadTrack(0);
+      }
+    });
+
+    function loadTrack(index) {
+      if (!files || files.length === 0) return;
+      currentIndex = index;
+      const file = files[index];
+      trackName.textContent = file.name;
+      const url = URL.createObjectURL(file);
+      audio.src = url;
+      audio.load();
+      audio.playbackRate = playbackRate;
+      progressBar.value = 0;
+      durationEl.textContent = '00:00';
+      setupVisualizer();
+    }
+
+    playBtn.addEventListener('click', async () => {
+      if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
+      audio.play();
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      audio.pause();
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (currentIndex > 0) {
+        loadTrack(currentIndex - 1);
+        audio.play();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentIndex < files.length - 1) {
+        loadTrack(currentIndex + 1);
+        audio.play();
+      }
+    });
+
+    function setupVisualizer() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      if (!source) {
+        try {
+          source = audioCtx.createMediaElementSource(audio);
+        } catch (e) {
+          // createMediaElementSource can only be called once per element/context
+          source = null;
+        }
+      }
+
+      if (!analyser) analyser = audioCtx.createAnalyser();
+
+      if (source) source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      analyser.fftSize = 256;
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      if (animationId) cancelAnimationFrame(animationId);
+
+      function draw() {
+        animationId = requestAnimationFrame(draw);
+        analyser.getByteFrequencyData(dataArray);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const logicalWidth = canvas.clientWidth;
+        const logicalHeight = canvas.clientHeight;
+        const barWidth = (logicalWidth / bufferLength) * 2.5;
+        let x = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          const v = dataArray[i] / 255; // 0..1
+          const barHeight = v * logicalHeight;
+          const gradient = ctx.createLinearGradient(0,0,0,logicalHeight);
+          gradient.addColorStop(0, '#00f5ff');
+          gradient.addColorStop(1, '#ff00c8');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(x, logicalHeight - barHeight, barWidth, barHeight);
+          x += barWidth + 1;
+        }
+      }
+      draw();
+    }
+
+    audio.addEventListener('loadedmetadata', () => {
+      progressBar.max = Math.floor(audio.duration) || 0;
+      durationEl.textContent = formatTime(audio.duration);
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      progressBar.value = Math.floor(audio.currentTime);
+      currentTimeEl.textContent = formatTime(audio.currentTime);
+    });
+
+    audio.addEventListener('ended', () => {
+      if (currentIndex < files.length - 1) {
+        loadTrack(currentIndex + 1);
+        audio.play();
+      } else {
+        audio.currentTime = 0;
+      }
+    });
+
+    progressBar.addEventListener('input', (e) => {
+      audio.currentTime = e.target.value;
+    });
+
+    speedRange.addEventListener('input', (e) => {
+      playbackRate = parseFloat(e.target.value);
+      audio.playbackRate = playbackRate;
+      speedValue.textContent = playbackRate.toFixed(2) + 'x';
+    });
+
+    function formatTime(seconds) {
+      if (!seconds || isNaN(seconds) || seconds === Infinity) return '00:00';
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
+    // Initialize speed display
+    playbackRate = parseFloat(speedRange.value);
+    audio.playbackRate = playbackRate;
+    speedValue.textContent = playbackRate.toFixed(2) + 'x';
+    // Ensure canvas sizing right away
+    resizeCanvas();
+  </script>
+</body>
+</html>

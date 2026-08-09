@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>심플 QR코드 메이커</title>
+  <!-- QRCode.js 라이브러리 로드 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+      background: #f4f7f6;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 450px;
+      padding: 40px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      color: #2d3748;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      color: #718096;
+      font-size: 0.95rem;
+      margin-bottom: 30px;
+    }
+
+    .input-group {
+      margin-bottom: 25px;
+      text-align: left;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 8px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-group input:focus {
+      border-color: #4299e1;
+    }
+
+    .qr-display-area {
+      background: #f8fafc;
+      border: 2px dashed #cbd5e0;
+      border-radius: 16px;
+      min-height: 250px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 25px;
+      padding: 20px;
+      position: relative;
+    }
+
+    #qrcode img {
+      margin: 0 auto;
+      display: block;
+      border: 10px solid #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .placeholder-text {
+      color: #a0aec0;
+      font-size: 0.9rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-generate {
+      background: #4299e1;
+      color: white;
+    }
+
+    .btn-generate:hover {
+      background: #3182ce;
+    }
+
+    .btn-download {
+      background: #48bb78;
+      color: white;
+      display: none; /* 생성 전에는 숨김 */
+    }
+
+    .btn-download:hover {
+      background: #38a169;
+    }
+
+    .options {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: #718096;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📱 QR코드 메이커</h1>
+      <p>URL이나 텍스트를 입력하여 즉시 생성하세요.</p>
+    </header>
+
+    <div class="input-group">
+      <label for="qrInput">내용 입력 (URL, 텍스트 등)</label>
+      <input type="text" id="qrInput" placeholder="https://example.com" maxlength="500" />
+    </div>
+
+    <div class="qr-display-area">
+      <div id="qrcode">
+        <p class="placeholder-text">내용을 입력하고 생성을 눌러주세요.</p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-generate" onclick="generateQR()">QR코드 생성하기</button>
+      <button id="downloadBtn" class="btn-download" onclick="downloadQR()">이미지로 저장하기</button>
+    </div>
+
+    <div class="options">
+      <div class="option-item"><span>●</span> 고화질 PNG</div>
+      <div class="option-item"><span>●</span> 즉시 생성</div>
+    </div>
+  </div>
+
+  <script>
+    function logAppEvent(message) {
+      const timestamp = new Date().toISOString();
+      fetch(`http://localhost:6766/logwrite/?writedata=${encodeURIComponent(`[${timestamp}] ${message}`)}`);
+    }
+
+    logAppEvent("qrcodemaker_page_loaded");
+    let qrcodeInstance = null;
+
+    function generateQR() {
+      logAppEvent("qrcodemaker_generate_started");
+      const input = document.getElementById('qrInput');
+      const text = input.value.trim();
+      const displayArea = document.getElementById('qrcode');
+      const downloadBtn = document.getElementById('downloadBtn');
+
+      if (!text) {
+        alert('QR코드로 만들 내용을 입력해주세요!');
+        input.focus();
+        return;
+      }
+
+      // 기존 내용 삭제
+      displayArea.innerHTML = '';
+
+      // QR코드 생성
+      qrcodeInstance = new QRCode(displayArea, {
+        text: text,
+        width: 200,
+        height: 200,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+
+      // 다운로드 버튼 표시
+      downloadBtn.style.display = 'block';
+      logAppEvent(`qrcodemaker_generate_completed_${text}`);
+    }
+
+    function downloadQR() {
+      logAppEvent("qrcodemaker_download_clicked");
+      const qrImage = document.querySelector('#qrcode img');
+      if (!qrImage) return;
+
+      const link = document.createElement('a');
+      link.href = qrImage.src;
+      link.download = 'qrcode_manus.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Enter 키 지원
+    document.getElementById('qrInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        logAppEvent("qrcodemaker_enter_pressed");
+        generateQR();
+      }
+    });
+  </script>
+</body>
+</html>

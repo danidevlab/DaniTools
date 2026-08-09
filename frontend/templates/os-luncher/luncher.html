@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>POLO LAUNCHER</title>
+    <meta name="polo-launcher" content="TRUE">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="appruntip.css">
+</head>
+
+<body>
+    <div id="desktop-files">현재 POLO LAUNCHER는 베타 버전입니다. 백그라운드 이미지는 Openai의 이미지 생성 모델이 제작하였습니다.</div>
+    <div id="desktop"></div>
+    <div id="taskbar">
+        <div id="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input id="app-search-input" type="search" placeholder="앱 검색" autocomplete="off" aria-label="앱 검색" />
+            <div id="search-results" class="search-results" aria-label="검색 결과"></div>
+        </div>
+        <button class="taskbar-app" title="디데이" data-tooltip="디데이 계산기">
+            📅
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="설정" data-tooltip="설정">
+            ⚙️
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="타이머" data-tooltip="타이머">
+            ⏱️
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="주사위 던지기" data-tooltip="주사위 던지기">
+            🎲
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="카메라" data-tooltip="카메라">
+            📷
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="랜덤 선택" data-tooltip="랜덤 선택">
+            🎯
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="돌림판" data-tooltip="돌림판">
+            🎡
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="점수판" data-tooltip="점수판">
+            🏆
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="메모" data-tooltip="메모">
+            📝
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="플레이어" data-tooltip="플레이어">
+            ▶️
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="소음 측정기" data-tooltip="소음 측정기">
+            🔊
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="QR 코드 생성기" data-tooltip="QR 코드 생성기">
+            📱
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="실시간 시계" data-tooltip="실시간 시계">
+            🕒
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="지구 라이브" data-tooltip="지구 라이브">
+            🌍
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="체크리스트" data-tooltip="체크리스트">
+            ✅
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="ChatAI" data-tooltip="ChatAI">
+            🤖
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="game" data-tooltip="인피니티 병합 타이쿤">
+            🎮
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="파일 암호화" data-tooltip="파일 암호화">
+            🔒
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="업데이트 로그" data-tooltip="업데이트 로그">
+            📜
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="Todaybriefing" data-tooltip="오늘의 브리핑">
+            📰
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="터미널" data-tooltip="터미널">
+            ❯_
+            <span class="running-indicator"></span>
+        </button>
+        <button class="taskbar-app" title="Plugin Manager" data-tooltip="Plugin Manager">
+            🧩
+            <span class="running-indicator"></span>
+        </button>
+
+        <div id="livetime">0000-00-00<br>
+        오전 0:00</div>
+    </div>
+
+
+    <script src="script.js" defer></script>
+</body>
+</html>

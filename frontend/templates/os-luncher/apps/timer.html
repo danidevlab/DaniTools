@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>심플 HTML 타이머</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f5f7fa;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 320px;
+        }
+
+        h1 {
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .timer-display {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-variant-numeric: tabular-nums;
+            transition: color 0.3s ease;
+        }
+
+        .timer-display.warning {
+            color: #ff4757;
+        }
+
+        .progress-container{
+            width:100%;
+            height:28px;
+            background:#e9ecef;
+            border-radius:15px;
+            overflow:hidden;
+            margin-bottom:1.5rem;
+        }
+
+        .progress-bar{
+            width:100%;
+            height:100%;
+            background:linear-gradient(90deg,#4a90e2,#6cc5ff);
+            transition:width 1s linear;
+        }
+
+        .inputs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-start { background-color: var(--primary-color); color: white; }
+        .btn-start:hover { background-color: #357abd; }
+        .btn-start:disabled { background-color: #ccc; }
+
+        .btn-stop { background-color: #ff4757; color: white; }
+        .btn-stop:hover { background-color: #e84118; }
+
+        .btn-reset { background-color: #747d8c; color: white; }
+        .btn-reset:hover { background-color: #2f3542; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>타이머</h1>
+    <div id="displayArea">
+
+        <div class="timer-display" id="display">
+            00:00:00
+        </div>
+
+        <div class="progress-container" id="progressContainer" style="display:none;">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+    </div>
+
+    <div class="inputs" id="input-group">
+        <div id="inputFields">
+            <input type="number" id="hours" placeholder="시" min="0" max="99" value="0">
+            <input type="number" id="minutes" placeholder="분" min="0" max="59" value="0">
+            <input type="number" id="seconds" placeholder="초" min="0" max="59" value="0">
+        </div>
+        <div class="progress-container" id="progressContainer" style="display:none;">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-start" id="startBtn">시작</button>
+        <button class="btn-stop" id="stopBtn" style="display:none;">일시정지</button>
+        <button class="btn-reset" id="resetBtn">리셋</button>
+    </div>
+</div>
+
+<script>
+    function logAppEvent(message) {
+        const timestamp = new Date().toISOString();
+        fetch(`http://localhost:6766/logwrite/?writedata=${encodeURIComponent(`[${timestamp}] ${message}`)}`);
+    }
+
+    logAppEvent("timer_page_loaded");
+
+    let timerInterval;
+    let totalSeconds = 0;
+
+    const display = document.getElementById('display');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const inputGroup = document.getElementById('input-group');
+
+    const hInput = document.getElementById('hours');
+    const mInput = document.getElementById('minutes');
+    const sInput = document.getElementById('seconds');
+    const inputFields = document.getElementById('inputFields');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+
+    let initialSeconds = 0;
+
+    function updateDisplay() {
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        display.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+        // 30초 이하일 때 빨간색으로 표시
+        if (totalSeconds <= 30 && totalSeconds > 0) {
+            display.classList.add('warning');
+        } else {
+            display.classList.remove('warning');
+        }
+
+        if (initialSeconds > 0) {
+            const percent = (totalSeconds / initialSeconds) * 100;
+            progressBar.style.width = percent + "%";
+        }
+    }
+
+    function playAlarm() {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        const notes = [880, 660, 880, 660];
+
+        notes.forEach((freq, index) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = "sine";
+            osc.frequency.value = freq;
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const start = audioCtx.currentTime + index * 0.35;
+
+            gain.gain.setValueAtTime(0.0001, start);
+            gain.gain.exponentialRampToValueAtTime(0.4, start + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.3);
+
+            osc.start(start);
+            osc.stop(start + 0.3);
+        });
+    }
+
+    startBtn.addEventListener('click', () => {
+        logAppEvent("timer_started");
+        if (totalSeconds === 0) {
+            const h = parseInt(hInput.value) || 0;
+            const m = parseInt(mInput.value) || 0;
+            const s = parseInt(sInput.value) || 0;
+
+            totalSeconds = h * 3600 + m * 60 + s;
+            initialSeconds = totalSeconds;
+        }
+
+        if (totalSeconds <= 0) return;
+
+        inputFields.style.display = 'none';
+        progressContainer.style.display = 'block';
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'inline-block';
+
+        timerInterval = setInterval(() => {
+            totalSeconds--;
+            updateDisplay();
+
+            if (totalSeconds <= 0) {
+                clearInterval(timerInterval);
+                logAppEvent("timer_completed");
+
+                playAlarm();
+
+                setTimeout(() => {
+                    alert("시간이 종료되었습니다!");
+                    resetTimer();
+                }, 1300);
+            }
+        }, 1000);
+    });
+
+    stopBtn.addEventListener('click', () => {
+        logAppEvent("timer_stopped");
+        clearInterval(timerInterval);
+        startBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+    });
+
+    resetBtn.addEventListener('click', resetTimer);
+
+    function resetTimer() {
+        logAppEvent("timer_reset");
+        clearInterval(timerInterval);
+        totalSeconds = 0;
+        updateDisplay();
+        inputFields.style.display = 'flex';
+        progressContainer.style.display = 'none';
+        progressBar.style.width = '100%';
+        initialSeconds = 0;
+        startBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+        hInput.value = 0;
+        mInput.value = 0;
+        sInput.value = 0;
+        display.classList.remove('warning');
+    }
+</script>
+
+</body>
+</html>

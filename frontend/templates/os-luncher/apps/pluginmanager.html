@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Plugin Manager</title>
+    </head>
+    <body>
+        <iframe src="https://dani.ggm.kr/webapp/pololauncher/api/pluginmanager.html" style="width: 100%; height: 100vh; border: none;"></iframe>
+    <script>
+        //만일 사이트 주소가 https://dani.ggm.kr/webapp/pololauncher/api/pluginmanager.html?getapp=으로 시작하면 getapp 파라미터를 가져와서 런처에 설치하는 기능 구현.
+        //가져와서 런처에 설치할 때는 localhost:6765/getapp?app={여기에 피라미터}여기를 호출하는 코드
+        const urlParams = new URLSearchParams(window.location.search);
+        const getapp = urlParams.get('getapp');
+        if (getapp) {
+        //가져와서 런처에 설치할 때는 localhost:6765/getapp?app={여기에 피라미터}여기를 호출하는 코드
+        fetch(`http://localhost:6765/getapp?app=${getapp}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('앱 설치 성공:', data);
+                alert('앱 설치 성공: ' + data.message);
+            })
+            .catch(error => {
+                console.error('앱 설치 실패:', error);
+                alert('앱 설치 실패: ' + error.message);
+            });
+        }
+    </script>
+    </body>
+</html>

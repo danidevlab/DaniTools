@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>Noise Meter Pro</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:system-ui;
+}
+
+body{
+background:#0f172a;
+color:white;
+display:flex;
+justify-content:center;
+padding:30px;
+}
+
+.container{
+width:100%;
+max-width:900px;
+}
+
+.card{
+background:#1e293b;
+border-radius:24px;
+padding:20px;
+margin-bottom:20px;
+box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+
+.top{
+display:grid;
+grid-template-columns:1fr 1fr 1fr;
+gap:15px;
+margin-top:20px;
+}
+
+.stat{
+background:#334155;
+padding:15px;
+border-radius:16px;
+text-align:center;
+}
+
+.label{
+font-size:12px;
+color:#94a3b8;
+}
+
+.value{
+font-size:32px;
+font-weight:700;
+margin-top:5px;
+}
+
+#db{
+font-size:90px;
+font-weight:800;
+text-align:center;
+}
+
+#status{
+font-size:24px;
+font-weight:700;
+text-align:center;
+margin-top:10px;
+}
+
+canvas{
+width:100%;
+background:#020617;
+border-radius:16px;
+margin-top:15px;
+}
+
+button{
+width:100%;
+padding:15px;
+border:none;
+border-radius:16px;
+background:#2563eb;
+color:white;
+font-size:18px;
+cursor:pointer;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
+.green{
+color:#22c55e;
+}
+
+.yellow{
+color:#f59e0b;
+}
+
+.orange{
+color:#fb923c;
+}
+
+.red{
+color:#ef4444;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<h2>🎤 Noise Meter Pro</h2>
+
+<div id="db">0</div>
+
+<div id="status">대기중</div>
+
+<div class="top">
+
+<div class="stat">
+<div class="label">현재</div>
+<div id="currentVal" class="value">0</div>
+</div>
+
+<div class="stat">
+<div class="label">최대</div>
+<div id="maxVal" class="value">0</div>
+</div>
+
+<div class="stat">
+<div class="label">평균</div>
+<div id="avgVal" class="value">0</div>
+</div>
+
+</div>
+
+<button id="startBtn">
+마이크 시작
+</button>
+
+</div>
+
+<div class="card">
+<h3>실시간 파형</h3>
+<canvas id="waveCanvas" height="180"></canvas>
+</div>
+
+<div class="card">
+<h3>최근 소음 추이</h3>
+<canvas id="historyChart"></canvas>
+</div>
+
+</div>
+
+<script>
+function logAppEvent(message) {
+const timestamp = new Date().toISOString();
+fetch(`http://localhost:6766/logwrite/?writedata=${encodeURIComponent(`[${timestamp}] ${message}`)}`);
+}
+
+logAppEvent('noise_meter_page_loaded');
+
+let maxDb=0;
+let values=[];
+
+const dbEl=document.getElementById("db");
+const statusEl=document.getElementById("status");
+const currentVal=document.getElementById("currentVal");
+const maxVal=document.getElementById("maxVal");
+const avgVal=document.getElementById("avgVal");
+
+const waveCanvas=document.getElementById("waveCanvas");
+const waveCtx=waveCanvas.getContext("2d");
+
+const historyCtx=document
+.getElementById("historyChart")
+.getContext("2d");
+
+const chart=new Chart(historyCtx,{
+type:'line',
+data:{
+labels:[],
+datasets:[{
+label:'dB',
+data:[],
+borderWidth:3,
+tension:.3
+}]
+},
+options:{
+responsive:true,
+animation:false,
+scales:{
+y:{
+min:30,
+max:120
+}
+}
+}
+});
+
+function whoLevel(db){
+
+if(db<=40)
+return {
+text:"매우 조용",
+class:"green"
+};
+
+if(db<=55)
+return {
+text:"적정",
+class:"green"
+};
+
+if(db<=70)
+return {
+text:"주의",
+class:"yellow"
+};
+
+if(db<=85)
+return {
+text:"시끄러움",
+class:"orange"
+};
+
+return {
+text:"위험",
+class:"red"
+};
+
+}
+
+async function start(){
+logAppEvent('noise_meter_started');
+
+const stream=
+await navigator.mediaDevices.getUserMedia({
+audio:true
+});
+
+const audioContext=
+new AudioContext();
+
+const analyser=
+audioContext.createAnalyser();
+
+analyser.fftSize=2048;
+
+const source=
+audioContext.createMediaStreamSource(stream);
+
+source.connect(analyser);
+
+const dataArray=
+new Uint8Array(analyser.fftSize);
+
+function draw(){
+
+requestAnimationFrame(draw);
+
+analyser.getByteTimeDomainData(dataArray);
+
+let sum=0;
+
+for(let i=0;i<dataArray.length;i++){
+
+const x=
+(dataArray[i]-128)/128;
+
+sum+=x*x;
+
+}
+
+const rms=
+Math.sqrt(sum/dataArray.length);
+
+let db=
+20*Math.log10(rms);
+
+if(!isFinite(db))
+db=-100;
+
+let displayDb=
+Math.round(
+Math.max(
+30,
+Math.min(
+120,
+db+100
+)
+)
+);
+
+values.push(displayDb);
+
+if(values.length>1000)
+values.shift();
+
+const avg=
+Math.round(
+values.reduce((a,b)=>a+b,0)
+/values.length
+);
+
+maxDb=
+Math.max(maxDb,displayDb);
+
+dbEl.innerText=displayDb;
+currentVal.innerText=displayDb;
+avgVal.innerText=avg;
+maxVal.innerText=maxDb;
+
+const level=
+whoLevel(displayDb);
+
+statusEl.innerText=level.text;
+statusEl.className=level.class;
+dbEl.className=level.class;
+
+waveCtx.clearRect(
+0,
+0,
+waveCanvas.width,
+waveCanvas.height
+);
+
+waveCtx.beginPath();
+waveCtx.lineWidth=2;
+waveCtx.strokeStyle="#3b82f6";
+
+for(let i=0;i<dataArray.length;i++){
+
+const x=
+(i/dataArray.length)
+*waveCanvas.width;
+
+const y=
+(dataArray[i]/255)
+*waveCanvas.height;
+
+if(i===0)
+waveCtx.moveTo(x,y);
+else
+waveCtx.lineTo(x,y);
+
+}
+
+waveCtx.stroke();
+
+}
+
+draw();
+
+setInterval(()=>{
+
+const time=
+new Date()
+.toLocaleTimeString();
+
+chart.data.labels.push(time);
+chart.data.datasets[0].data.push(
+parseInt(dbEl.innerText)
+);
+
+if(chart.data.labels.length>60){
+
+chart.data.labels.shift();
+chart.data.datasets[0].data.shift();
+
+}
+
+chart.update();
+
+},1000);
+
+document
+.getElementById("startBtn")
+.remove();
+
+}
+
+document
+.getElementById("startBtn")
+.addEventListener("click",()=>{
+logAppEvent('noise_meter_button_clicked');
+start();
+});
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,79 @@
+<div class="clock-card">
+    <div id="date"></div>
+    <div id="clock"></div>
+</div>
+
+<style>
+.clock-card{
+    width:min(500px,90vw);
+    margin:20px auto;
+    padding:25px;
+    border-radius:24px;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,0.15);
+    box-shadow:
+        0 8px 32px rgba(0,0,0,0.3),
+        inset 0 0 1px rgba(255,255,255,0.4);
+    text-align:center;
+}
+
+#date{
+    font-size:18px;
+    opacity:.8;
+    margin-bottom:8px;
+    letter-spacing:1px;
+}
+
+#clock{
+    font-size:clamp(42px,8vw,72px);
+    font-weight:700;
+    letter-spacing:4px;
+    font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif;
+    text-shadow:
+        0 0 10px rgba(255,255,255,0.2),
+        0 0 25px rgba(255,255,255,0.15);
+}
+
+.blink{
+    opacity:.3;
+}
+</style>
+
+<script>
+const clockEl = document.getElementById("clock");
+const dateEl = document.getElementById("date");
+
+function updateClock(){
+
+    const now = new Date();
+
+    const days = [
+        "일요일","월요일","화요일",
+        "수요일","목요일","금요일","토요일"
+    ];
+
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth()+1).padStart(2,"0");
+    const dd = String(now.getDate()).padStart(2,"0");
+
+    const hh = String(now.getHours()).padStart(2,"0");
+    const min = String(now.getMinutes()).padStart(2,"0");
+    const ss = String(now.getSeconds()).padStart(2,"0");
+
+    dateEl.textContent =
+        `${yyyy}.${mm}.${dd} ${days[now.getDay()]}`;
+
+    const colon = now.getSeconds() % 2 ? ":" : " ";
+
+    clockEl.innerHTML =
+        `${hh}${colon}${min}${colon}${ss}`;
+}
+
+updateClock();
+setInterval(updateClock,1000);
+</script>

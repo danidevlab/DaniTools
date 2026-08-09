@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>멋진 웹 카메라</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .camera-container {
+            background: #1e1e1e;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 16 / 9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* 거울 모드 */
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #stop-rec {
+            background: #dc2626;
+        }
+        #stop-rec:hover {
+            background: #b91c1c;
+        }
+
+        .settings {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            background: #2a2a2a;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        select {
+            background: #3a3a3a;
+            color: white;
+            border: 1px solid #4a4a4a;
+            padding: 6px 12px;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .status {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(220, 38, 38, 0.8);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: none;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="camera-container">
+        <div class="settings">
+            <div class="setting-group">
+                <label for="resolution">화질 (해상도)</label>
+                <select id="resolution">
+                    <option value="1920x1080">Full HD (1080p)</option>
+                    <option value="1280x720" selected>HD (720p)</option>
+                    <option value="640x480">VGA (480p)</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label for="fps">프레임 레이트 (FPS)</label>
+                <select id="fps">
+                    <option value="60">60 FPS</option>
+                    <option value="30" selected>30 FPS</option>
+                    <option value="15">15 FPS</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="video-wrapper">
+            <div class="status" id="rec-status">🔴 녹화 중</div>
+            <video id="webcam" autoplay playsinline muted></video>
+        </div>
+
+        <div class="controls">
+            <button id="capture">사진 촬영</button>
+            <button id="start-rec">동영상 녹화 시작</button>
+            <button id="stop-rec" style="display: none;">녹화 중지 및 저장</button>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const resolutionSelect = document.getElementById('resolution');
+        const fpsSelect = document.getElementById('fps');
+        const captureBtn = document.getElementById('capture');
+        const startRecBtn = document.getElementById('start-rec');
+        const stopRecBtn = document.getElementById('stop-rec');
+        const recStatus = document.getElementById('rec-status');
+
+        let currentStream = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+
+        // 카메라 시작 함수
+        async function startCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+
+            const [width, height] = resolutionSelect.value.split('x').map(Number);
+            const fps = parseInt(fpsSelect.value);
+
+            const constraints = {
+                video: {
+                    width: { ideal: width },
+                    height: { ideal: height },
+                    frameRate: { ideal: fps }
+                },
+                audio: true // 동영상 녹화용 마이크 소리 포함
+            };
+
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = currentStream;
+            } catch (error) {
+                console.error("카메라를 불러올 수 없습니다:", error);
+                alert("카메라 권한을 허용하거나 연결을 확인해주세요.");
+            }
+        }
+
+        // 설정 변경 시 카메라 재시작
+        resolutionSelect.addEventListener('change', startCamera);
+        fpsSelect.addEventListener('change', startCamera);
+
+        // 사진 촬영 및 다운로드
+        captureBtn.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            
+            // 거울 모드 반전 적용하여 캔버스에 그리기
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const link = document.createElement('a');
+            link.download = `photo_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // 동영상 녹화 시작
+        startRecBtn.addEventListener('click', () => {
+            recordedChunks = [];
+            mediaRecorder = new MediaRecorder(currentStream, { mimeType: 'video/webm' });
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = `video_${Date.now()}.webm`;
+                link.href = url;
+                link.click();
+            };
+
+            mediaRecorder.start();
+            
+            // UI 변경
+            startRecBtn.style.display = 'none';
+            stopRecBtn.style.display = 'inline-block';
+            recStatus.style.display = 'block';
+        });
+
+        // 동영상 녹화 중지
+        stopRecBtn.addEventListener('click', () => {
+            mediaRecorder.stop();
+            
+            // UI 변경
+            startRecBtn.style.display = 'inline-block';
+            stopRecBtn.style.display = 'none';
+            recStatus.style.display = 'none';
+        });
+
+        // 처음 페이지 열 때 카메라 켜기
+        startCamera();
+    </script>
+</body>
+</html>

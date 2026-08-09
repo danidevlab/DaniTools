@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D 주사위 2개</title>
+
+<style>
+body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    background:#20242a;
+    color:white;
+    font-family:Arial,sans-serif;
+}
+
+h1{
+    margin-bottom:30px;
+}
+
+.scene{
+    display:flex;
+    gap:60px;
+    perspective:1200px;
+    margin-bottom:40px;
+}
+
+.dice{
+    position:relative;
+    width:100px;
+    height:100px;
+    transform-style:preserve-3d;
+    transition:transform 2s cubic-bezier(.17,.67,.17,1);
+}
+
+.face{
+    position:absolute;
+    width:100px;
+    height:100px;
+    background:white;
+    border:2px solid #ddd;
+    border-radius:12px;
+    box-sizing:border-box;
+}
+
+.front  { transform:translateZ(50px); }
+.back   { transform:rotateY(180deg) translateZ(50px); }
+.right  { transform:rotateY(90deg) translateZ(50px); }
+.left   { transform:rotateY(-90deg) translateZ(50px); }
+.top    { transform:rotateX(90deg) translateZ(50px); }
+.bottom { transform:rotateX(-90deg) translateZ(50px); }
+
+.face{
+    display:grid;
+    padding:10px;
+}
+
+.dot{
+    width:16px;
+    height:16px;
+    background:#111;
+    border-radius:50%;
+    align-self:center;
+    justify-self:center;
+}
+
+.one{
+    grid-template:
+    ". . ."
+    ". a ."
+    ". . .";
+}
+.one .dot:nth-child(1){grid-area:a;}
+
+.two{
+    grid-template:
+    "a . ."
+    ". . ."
+    ". . b";
+}
+.two .dot:nth-child(1){grid-area:a;}
+.two .dot:nth-child(2){grid-area:b;}
+
+.three{
+    grid-template:
+    "a . ."
+    ". b ."
+    ". . c";
+}
+.three .dot:nth-child(1){grid-area:a;}
+.three .dot:nth-child(2){grid-area:b;}
+.three .dot:nth-child(3){grid-area:c;}
+
+.four{
+    grid-template:
+    "a . b"
+    ". . ."
+    "c . d";
+}
+.four .dot:nth-child(1){grid-area:a;}
+.four .dot:nth-child(2){grid-area:b;}
+.four .dot:nth-child(3){grid-area:c;}
+.four .dot:nth-child(4){grid-area:d;}
+
+.five{
+    grid-template:
+    "a . b"
+    ". c ."
+    "d . e";
+}
+.five .dot:nth-child(1){grid-area:a;}
+.five .dot:nth-child(2){grid-area:b;}
+.five .dot:nth-child(3){grid-area:c;}
+.five .dot:nth-child(4){grid-area:d;}
+.five .dot:nth-child(5){grid-area:e;}
+
+.six{
+    grid-template:
+    "a . b"
+    "c . d"
+    "e . f";
+}
+.six .dot:nth-child(1){grid-area:a;}
+.six .dot:nth-child(2){grid-area:b;}
+.six .dot:nth-child(3){grid-area:c;}
+.six .dot:nth-child(4){grid-area:d;}
+.six .dot:nth-child(5){grid-area:e;}
+.six .dot:nth-child(6){grid-area:f;}
+
+button{
+    padding:14px 28px;
+    font-size:20px;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+}
+
+#result{
+    margin-top:20px;
+    font-size:26px;
+    font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<h1>🎲 3D 주사위 2개</h1>
+
+<div class="scene">
+
+<div class="dice" id="dice1">
+    <div class="face front one"><div class="dot"></div></div>
+    <div class="face back six">
+        <div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="face right three">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="face left four">
+        <div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="face top five">
+        <div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+    <div class="face bottom two">
+        <div class="dot"></div><div class="dot"></div>
+    </div>
+</div>
+
+<div class="dice" id="dice2">
+    <div class="face front one"><div class="dot"></div></div>
+    <div class="face back six">
+        <div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="face right three">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="face left four">
+        <div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="face top five">
+        <div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+    <div class="face bottom two">
+        <div class="dot"></div><div class="dot"></div>
+    </div>
+</div>
+
+</div>
+
+<button onclick="rollDice()">굴리기</button>
+
+<div id="result">버튼을 눌러 주세요</div>
+
+<script>
+function logAppEvent(message) {
+    const timestamp = new Date().toISOString();
+    fetch(`http://localhost:6766/logwrite/?writedata=${encodeURIComponent(`[${timestamp}] ${message}`)}`);
+}
+
+logAppEvent("dice_page_loaded");
+
+const rotations = {
+    1: "rotateX(0deg) rotateY(0deg)",
+    2: "rotateX(90deg) rotateY(0deg)",
+    3: "rotateY(-90deg)",
+    4: "rotateY(90deg)",
+    5: "rotateX(-90deg)",
+    6: "rotateY(180deg)"
+};
+
+function randomInt(min,max){
+    return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+function rollDice(){
+    logAppEvent("dice_roll_started");
+
+    const d1 = randomInt(1,6);
+    const d2 = randomInt(1,6);
+
+    const dice1 = document.getElementById("dice1");
+    const dice2 = document.getElementById("dice2");
+
+    const spin1X = randomInt(4,8)*360;
+    const spin1Y = randomInt(4,8)*360;
+
+    const spin2X = randomInt(4,8)*360;
+    const spin2Y = randomInt(4,8)*360;
+
+    dice1.style.transform =
+        `rotateX(${spin1X}deg) rotateY(${spin1Y}deg)`;
+
+    dice2.style.transform =
+        `rotateX(${spin2X}deg) rotateY(${spin2Y}deg)`;
+
+    setTimeout(() => {
+
+        dice1.style.transform =
+            `rotateX(${spin1X}deg) ${rotations[d1]}`;
+
+        dice2.style.transform =
+            `rotateY(${spin2Y}deg) ${rotations[d2]}`;
+ 
+    },100);
+}
+</script>
+
+</body>
+</html>

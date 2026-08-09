@@ -1,0 +1,12 @@
+<xml>
+    <predict_need-apps>
+        <ollama>
+        </ollama>
+        <gemma4-4B>
+        <!--ai 모델 다운로드 링크-->
+        </gemma4-4B>
+        <pip-librarys>
+        <!--라이브러리 설치 명령어-->
+        </pip-librarys>
+    </predict_need-apps>
+</xml>

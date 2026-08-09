@@ -1,0 +1,10 @@
+<xml>
+    <predict_user_data>
+        <name></name>
+        <age></age>
+        <job></job>
+        <like></like>
+        <good></good>
+        <speech_type></speech_type>
+    </predict_user_data>
+</xml>

@@ -1,0 +1,25 @@
+/* 실행 중 표시 */
+.taskbar-app {
+    position: relative;
+}
+
+.running-indicator {
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    width: 18px;
+    height: 4px;
+    border-radius: 999px;
+    background: #4ade80;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
+
+    transform: translateX(-50%) scaleX(0.4);
+    opacity: 0;
+    transition: opacity .2s ease, transform .2s ease;
+}
+
+/* 실행 중일 때 */
+.taskbar-app.running .running-indicator {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1);
+}

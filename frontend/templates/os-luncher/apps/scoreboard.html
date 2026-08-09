@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>온라인 점수판</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #111;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    .scoreboard {
+        display: flex;
+        gap: 40px;
+        text-align: center;
+    }
+
+    .team {
+        background: #222;
+        padding: 30px;
+        border-radius: 15px;
+        width: 280px;
+        box-shadow: 0 0 15px rgba(255,255,255,0.1);
+    }
+
+    input {
+        width: 100%;
+        text-align: center;
+        font-size: 24px;
+        padding: 8px;
+        border: none;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .score {
+        font-size: 80px;
+        font-weight: bold;
+        margin: 20px 0;
+        color: #00ff99;
+    }
+
+    button {
+        padding: 10px 15px;
+        margin: 5px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .plus {
+        background: #28a745;
+        color: white;
+    }
+
+    .minus {
+        background: #dc3545;
+        color: white;
+    }
+
+    .reset {
+        background: #007bff;
+        color: white;
+        width: 100%;
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+
+<div>
+    <div class="scoreboard">
+
+        <div class="team">
+            <input type="text" value="HOME">
+            <div class="score" id="score1">0</div>
+
+            <button class="plus" onclick="changeScore(1,1)">+1</button>
+
+            <br>
+
+            <button class="minus" onclick="changeScore(1,-1)">-1</button>
+        </div>
+
+        <div class="team">
+            <input type="text" value="AWAY">
+            <div class="score" id="score2">0</div>
+
+            <button class="plus" onclick="changeScore(2,1)">+1</button>
+
+            <br>
+
+            <button class="minus" onclick="changeScore(2,-1)">-1</button>
+        </div>
+
+    </div>
+
+    <button class="reset" onclick="resetScores()">점수 초기화</button>
+</div>
+
+<script>
+function logAppEvent(message) {
+    const timestamp = new Date().toISOString();
+    fetch(`http://localhost:6766/logwrite/?writedata=${encodeURIComponent(`[${timestamp}] ${message}`)}`);
+}
+
+logAppEvent("scoreboard_page_loaded");
+
+let scores = {
+    1: 0,
+    2: 0
+};
+
+function changeScore(team, value) {
+    logAppEvent(`scoreboard_score_changed_team${team}_value${value}`);
+    scores[team] += value;
+
+    if (scores[team] < 0) {
+        scores[team] = 0;
+    }
+
+    document.getElementById("score" + team).textContent = scores[team];
+}
+
+function resetScores() {
+    logAppEvent("scoreboard_scores_reset");
+    scores[1] = 0;
+    scores[2] = 0;
+
+    document.getElementById("score1").textContent = 0;
+    document.getElementById("score2").textContent = 0;
+}
+</script>
+
+</body>
+</html>
