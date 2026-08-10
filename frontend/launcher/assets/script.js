@@ -14,8 +14,7 @@
             '파일 암호화': './apps/filesecurety.html',
             'game': "./apps/game.html",
             '지구 라이브': './apps/earthlive.html',
-            '플레이어': "./apps/files-viewer/index.html",
-            'Plugin Manager': "./apps/pluginmanager.html"
+            '플레이어': "./apps/files-viewer/index.html"
         };
 
         const SEARCH_RESULTS_LIMIT = 6;
