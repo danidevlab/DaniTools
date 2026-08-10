@@ -8,12 +8,12 @@ DaniTools는 심플하고 강력한 POLO LAUNCHER 기반 프로그램입니다.(
 </details>
 <details>
 <summary>파일 구조</summary>
-📦 Program
- ┣ 📂 frontend
- ┃ ┗ 📜 
- ┣ 📂 backend
- ┃ ┗ 📜 
- ┣ 📂 userdata
- ┃ ┗ 📜 
- ┗ 📜 README.md
+📦 Program<br>
+ ┣ 📂 frontend<br>
+ ┃ ┗ 📜 <br>
+ ┣ 📂 backend<br>
+ ┃ ┗ 📜 <br>
+ ┣ 📂 userdata<br>
+ ┃ ┗ 📜 <br>
+ ┗ 📜 README.md<br>
 </details>
