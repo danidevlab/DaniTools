@@ -14,7 +14,6 @@
             '파일 암호화': './apps/filesecurety.html',
             'game': "./apps/game.html",
             '지구 라이브': './apps/earthlive.html',
-            '업데이트 로그': "./apps/updateLog.html",
             '플레이어': "./apps/files-viewer/index.html",
             'Plugin Manager': "./apps/pluginmanager.html"
         };
@@ -75,7 +74,7 @@
             });
         }
 
-        alert("현재 POLO LAUNCHER는 베타 버전입니다. 일부 기능이 정상적으로 동작하지 않을 수 있습니다. ");
+        alert("현재 DaniTools는 베타 버전입니다. 일부 기능이 정상적으로 동작하지 않을 수 있습니다. ");
 
         function updateClock() {
         const now = new Date();
@@ -104,7 +103,7 @@
         document.body.style.backgroundSize = 'cover';
         document.body.style.backgroundPosition = 'center';
 
-        const STORAGE_KEY = 'polo_launcher_windows';
+        const STORAGE_KEY = '_daniTools_windows';
         let zIndexCounter = 100;
 
         function logLauncherEvent(message) {
