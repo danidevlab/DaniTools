@@ -17,7 +17,6 @@
             'game': "./apps/game.html",
             '지구 라이브': './apps/earthlive.html',
             '업데이트 로그': "./apps/updateLog.html",
-            '터미널': "./apps/terminal.html",
             'Todaybriefing': "./apps/todaybriefing.html",
             '플레이어': "./apps/files-viewer/index.html",
             'Plugin Manager': "./apps/pluginmanager.html"
