@@ -12,7 +12,6 @@
             '체크리스트': './apps/checklist.html',
             '설정': './apps/settings.html',
             '파일 암호화': './apps/filesecurety.html',
-            'game': "./apps/game.html",
             '지구 라이브': './apps/earthlive.html',
             '플레이어': "./apps/files-viewer/index.html"
         };
