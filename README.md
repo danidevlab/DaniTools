@@ -19,5 +19,9 @@ DaniTools는 심플하고 강력한 POLO LAUNCHER 기반 프로그램입니다.(
 </details>
 <details>
 <summary>백엔드 저장</summary>
-창 저장 코드 : 
+    <details>
+    <summary>창(Window)</summary>
+    창 저장 코드 : fetch(`http://localhost:4047/savewindowdata/?windowdata=)
+    창 복원 코드 : fetch(http://localhost:4047/getwindowdata/)
+    </details>
 </details>

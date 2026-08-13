@@ -101,42 +101,38 @@
         document.body.style.backgroundSize = 'cover';
         document.body.style.backgroundPosition = 'center';
 
-        const STORAGE_KEY = '_daniTools_windows';
-        let zIndexCounter = 100;
+let zIndexCounter = 100;
 
         function logLauncherEvent(message) {
             const timestamp = new Date().toISOString();
-            fetch(`http://localhost:6766/logwrite/?writedata=${encodeURIComponent(`[${timestamp}] ${message}`)}`);
+            fetch(`http://localhost:6766/logwrite/?writedata=${encodeURIComponent(`[${timestamp}] ${message}`)}`);  
         }
 
-        function getCachedWindows() {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (!raw) return [];
+        function saveWindowDataToServer(windows) {
             try {
-                return JSON.parse(raw) || [];
+                const windowData = JSON.stringify(windows);
+                fetch(`http://localhost:4047/savewindowdata/?windowdata=${encodeURIComponent(windowData)}`);
             } catch (error) {
-                console.warn('Failed to parse window cache:', error);
-                return [];
-            }
-        }
-
-        function setCachedWindows(windows) {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(windows));
-            } catch (error) {
-                console.warn('Failed to save window cache:', error);
+                console.warn('Failed to save window data to server:', error);
             }
         }
 
         function saveWindowState(state) {
-            const windows = getCachedWindows().filter(w => w.title !== state.title);
-            windows.push(state);
-            setCachedWindows(windows);
+            try {
+                const windowData = JSON.stringify(state);
+                fetch(`http://localhost:4047/savewindowdata/?windowdata=${encodeURIComponent(windowData)}`);
+            } catch (error) {
+                console.warn('Failed to save window state to server:', error);
+            }
         }
 
         function removeWindowState(title) {
-            const windows = getCachedWindows().filter(w => w.title !== title);
-            setCachedWindows(windows);
+            try {
+                const removeData = JSON.stringify({ title, action: 'remove' });
+                fetch(`http://localhost:4047/savewindowdata/?windowdata=${encodeURIComponent(removeData)}`);
+            } catch (error) {
+                console.warn('Failed to remove window state from server:', error);
+            }
         }
 
         function syncTaskbarRunningState(title) {
@@ -165,12 +161,21 @@
             saveWindowState(state);
         }
 
-        function restoreCachedWindows() {
-            const savedWindows = getCachedWindows();
-            if (!savedWindows.length) return;
-            savedWindows.forEach(state => {
-                createWindow(state.title, state.url, state);
-            });
+        async function restoreCachedWindows() {
+            try {
+                const response = await fetch(`http://localhost:4047/getwindowdata/`);
+                if (!response.ok) {
+                    console.warn('Failed to fetch window data from server');
+                    return;
+                }
+                const savedWindows = await response.json();
+                if (!Array.isArray(savedWindows) || !savedWindows.length) return;
+                savedWindows.forEach(state => {
+                    createWindow(state.title, state.url, state);
+                });
+            } catch (error) {
+                console.warn('Failed to restore cached windows:', error);
+            }
         }
 
         function createWindow(title, url, state = null) {
