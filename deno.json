@@ -1,5 +1,6 @@
 {
   "tasks": {
-    "start": "deno run --allow-net --allow-read ./backend/hosting.js"
+    "start": "deno run --allow-net --allow-read ./backend/hosting.js",
+    "backend": "deno run --allow-net --allow-read --allow-write --unstable-detect-cjs ./backend/listenmain.js"
   }
 }
