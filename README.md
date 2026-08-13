@@ -103,6 +103,5 @@ fetch("http://localhost:4047/app/memorestore/");
 - [ ] 업데이트 확인 API
 - [ ] 버전 파일(version.json)
 - [ ] 자동 백업 기능
-- [ ] 로그 기록 기능
 
 </details>
