@@ -1,7 +1,7 @@
 import { serveDir } from "jsr:@std/http/file-server";
 
 // 서버 시작
-Deno.serve({ port: 8000 }, (req) => {
+Deno.serve({ port: 5050 }, (req) => {
   return serveDir(req, {
     fsRoot: "../frontend",
     urlRoot: "",
@@ -13,6 +13,6 @@ new Deno.Command("powershell", {
   args: [
     "-NoProfile",
     "-Command",
-    "Start-Process 'http://localhost:8000'",
+    "Start-Process 'http://localhost:5050'",
   ],
 }).output();
