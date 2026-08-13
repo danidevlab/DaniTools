@@ -361,12 +361,31 @@
       { text: '보고서 작성', done: false },
     ];
 
-    let items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || DEFAULT_ITEMS;
+    let items = [];
     let currentFilter = 'all';
 
-    // 캐시 저장 기능 (localStorage)
+    // 서버에서 데이터 불러오기
+    async function loadData() {
+      try {
+        const response = await fetch('http://localhost:4047/app/checklistrestore/');
+        if (response.ok) {
+          const data = await response.json();
+          items = Array.isArray(data) ? data : DEFAULT_ITEMS;
+        } else {
+          items = [...DEFAULT_ITEMS];
+        }
+      } catch (err) {
+        console.error('불러오기 실패:', err);
+        items = [...DEFAULT_ITEMS];
+      }
+      render();
+    }
+
+    // 서버 저장 기능 (fetch)
     function save() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      const dataStr = JSON.stringify(items);
+      fetch(`http://localhost:4047/app/checklistsave/?data=${encodeURIComponent(dataStr)}`)
+        .catch(err => console.error('저장 실패:', err));
       showSaveIndicator();
     }
 
@@ -534,8 +553,8 @@
       }
     });
 
-    // 초기 렌더링
-    render();
+    // 서버에서 데이터 불러온 후 렌더링
+    loadData();
   </script>
 </body>
 </html>

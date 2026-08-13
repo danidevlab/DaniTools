@@ -253,11 +253,7 @@ function openPopup_hiclass(){
     alert("메모 내용이 클립보드에 복사되었습니다. 하이클래스 알림장 작성 페이지에서 붙여넣기(Ctrl+V) 하세요.");
     fetch(`http://localhost:6766/logwrite/?writedata=memo_alert_success`);
 
-    window.open(
-        "https://www.hiclass.net/main/home",
-        "eventPopup",
-        "width=${screen.width},height=${screen.height},left=0,top=0"
-    );
+    window.open("https://www.hiclass.net/main/home", "_blank");
     fetch(`http://localhost:6766/logwrite/?writedata=memo_windowopen-hiclass_success`);
 }
 
@@ -270,24 +266,18 @@ function openPopup_google(){
 
     alert("메모 내용이 클립보드에 복사되었습니다. 구글 클래스룸 공지사항 작성 페이지에서 붙여넣기(Ctrl+V) 하세요.");
     fetch(`http://localhost:6766/logwrite/?writedata=memo_alert_success`);
-    window.open(
-        "https://classroom.google.com",
-        "eventPopup",
-        "width=1200,height=750,left=100,top=100"
-    );
+    window.open("https://classroom.google.com", "_blank");
     fetch(`http://localhost:6766/logwrite/?writedata=memo_windowopen-googleclassroom_success`);
 }
 
-let pages =
-JSON.parse(localStorage.getItem("memoPages")) || [
+let pages = [
     {
         title:"페이지 1",
         content:""
     }
 ];
 
-let current =
-Number(localStorage.getItem("currentPage")) || 0;
+let current = 0;
 
 const titleEl=document.getElementById("title");
 const contentEl=document.getElementById("content");
@@ -303,16 +293,9 @@ if(localStorage.getItem("theme")==="dark"){
 /* 저장 */
 
 function saveAll(){
-
-    localStorage.setItem(
-        "memoPages",
-        JSON.stringify(pages)
-    );
-
-    localStorage.setItem(
-        "currentPage",
-        current
-    );
+    const dataStr = JSON.stringify(pages);
+    fetch(`http://localhost:4047/app/memosave/?data=${encodeURIComponent(dataStr)}`)
+        .catch(err => console.error('메모 저장 실패:', err));
 
     saveStatus.textContent="저장됨 ✓";
 
@@ -321,6 +304,21 @@ function saveAll(){
     window.saveTimer=setTimeout(()=>{
         saveStatus.textContent="자동 저장됨";
     },1200);
+}
+
+/* 서버에서 데이터 불러오기 */
+
+async function loadData(){
+    try{
+        const response = await fetch('http://localhost:4047/app/memorestore/');
+        if(response.ok){
+            const data = await response.json();
+            pages = Array.isArray(data) ? data : pages;
+        }
+    }catch(err){
+        console.error('메모 불러오기 실패:', err);
+    }
+    loadPage();
 }
 
 /* 페이지 목록 */
@@ -462,7 +460,7 @@ function toggleTheme(){
 
 /* 시작 */
 
-loadPage();
+loadData();
 
 </script>
 
