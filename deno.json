@@ -1,0 +1,5 @@
+{
+  "tasks": {
+    "start": "start /b deno run --allow-net --allow-read ./backend/hosting.js && timeout /t 1 /nobreak >nul && start http://localhost:8000"
+  }
+}
