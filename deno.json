@@ -1,5 +1,5 @@
 {
   "tasks": {
-    "start": "start /b deno run --allow-net --allow-read ./backend/hosting.js && timeout /t 1 /nobreak >nul && start http://localhost:8000"
+    "start": "powershell -NoProfile -Command \"Start-Process deno -ArgumentList 'run --allow-net --allow-read ./backend/hosting.js'; Start-Sleep -Seconds 1; Start-Process 'http://localhost:8000'\""
   }
 }
