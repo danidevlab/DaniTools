@@ -1,119 +1,491 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+const USERDATA_DIR = new URL("../userdata/", import.meta.url);
 
-const FILE = "./windowdata.json";
+const WINDOWDATA_FILE = new URL(
+  "../userdata/windowdata.json",
+  import.meta.url
+);
+
+const MEMODATA_FILE = new URL(
+  "../userdata/memodata.json",
+  import.meta.url
+);
+
+const MEMO_PAGES_DIR = new URL(
+  "../userdata/memoapp-pages/",
+  import.meta.url
+);
 
 const headers = {
-  "Content-Type": "application/json",
+  "Content-Type": "application/json; charset=utf-8",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "*",
 };
 
-serve(async (req) => {
-  const url = new URL(req.url);
+const textHeaders = {
+  "Content-Type": "text/plain; charset=utf-8",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "*",
+};
 
-  // CORS Preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers,
-    });
-  }
 
-  // =========================
-  // 창 데이터 저장
-  // =========================
-  if (url.pathname === "/savewindowdata/") {
-    const data = url.searchParams.get("windowdata");
+// ======================================================
+// JSON 응답
+// ======================================================
 
-    if (!data) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "windowdata 없음",
-        }),
-        {
-          status: 400,
-          headers,
-        }
-      );
-    }
-
-    try {
-      // JSON 형식인지 확인
-      JSON.parse(data);
-
-      await Deno.writeTextFile(FILE, data);
-
-      console.log("창 데이터 저장 완료");
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-        }),
-        {
-          status: 200,
-          headers,
-        }
-      );
-    } catch (error) {
-      console.error("저장 실패:", error);
-
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "저장 실패",
-        }),
-        {
-          status: 500,
-          headers,
-        }
-      );
-    }
-  }
-
-  // =========================
-  // 창 데이터 복원
-  // =========================
-  if (url.pathname === "/getwindowdata/") {
-    try {
-      const data = await Deno.readTextFile(FILE);
-
-      // JSON 유효성 검사
-      JSON.parse(data);
-
-      console.log("창 데이터 복원 요청");
-
-      return new Response(data, {
-        status: 200,
-        headers,
-      });
-    } catch (error) {
-      console.log("저장된 창 데이터 없음");
-
-      // 파일이 없으면 빈 배열 반환
-      return new Response("[]", {
-        status: 200,
-        headers,
-      });
-    }
-  }
-
-  // =========================
-  // 존재하지 않는 경로
-  // =========================
+function jsonResponse(data, status = 200) {
   return new Response(
-    JSON.stringify({
-      success: false,
-      error: "Not Found",
-    }),
+    JSON.stringify(data),
     {
-      status: 404,
+      status,
       headers,
     }
   );
-}, {
-  port: 4047,
-});
+}
 
-console.log("창 데이터 서버 실행: http://localhost:4047");
+
+// ======================================================
+// 서버
+// ======================================================
+
+Deno.serve(
+  {
+    hostname: "127.0.0.1",
+    port: 4047,
+
+    onListen({ hostname, port }) {
+      console.log(
+        `[AppListen] 서버 실행: http://${hostname}:${port}`
+      );
+    },
+  },
+
+  async (req) => {
+    const url = new URL(req.url);
+
+    // ==================================================
+    // CORS
+    // ==================================================
+
+    if (req.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers,
+      });
+    }
+
+
+    // ==================================================
+    // 창 데이터 저장
+    // GET
+    // /savewindowdata/?windowdata=...
+    // ==================================================
+
+    if (
+      url.pathname === "/savewindowdata/" &&
+      req.method === "GET"
+    ) {
+      const data = url.searchParams.get("windowdata");
+
+      if (!data) {
+        return jsonResponse(
+          {
+            success: false,
+            error: "windowdata 없음",
+          },
+          400
+        );
+      }
+
+      try {
+        JSON.parse(data);
+
+        await Deno.writeTextFile(
+          WINDOWDATA_FILE,
+          data
+        );
+
+        console.log(
+          "[WindowData] 저장 완료"
+        );
+
+        return jsonResponse({
+          success: true,
+        });
+      } catch (error) {
+        console.error(
+          "[WindowData] 저장 실패:",
+          error
+        );
+
+        return jsonResponse(
+          {
+            success: false,
+            error: "windowdata 저장 실패",
+          },
+          500
+        );
+      }
+    }
+
+
+    // ==================================================
+    // 창 데이터 복원
+    // GET
+    // /getwindowdata/
+    // ==================================================
+
+    if (
+      url.pathname === "/getwindowdata/" &&
+      req.method === "GET"
+    ) {
+      try {
+        const data =
+          await Deno.readTextFile(
+            WINDOWDATA_FILE
+          );
+
+        JSON.parse(data);
+
+        console.log(
+          "[WindowData] 복원 요청"
+        );
+
+        return new Response(
+          data,
+          {
+            status: 200,
+            headers,
+          }
+        );
+
+      } catch {
+        console.log(
+          "[WindowData] 저장된 데이터 없음"
+        );
+
+        return new Response(
+          "[]",
+          {
+            status: 200,
+            headers,
+          }
+        );
+      }
+    }
+
+
+    // ==================================================
+    // 메모 데이터 저장
+    // GET
+    // /app/memosave/?data=...
+    // ==================================================
+
+    if (
+      url.pathname === "/app/memosave/" &&
+      req.method === "GET"
+    ) {
+      const data =
+        url.searchParams.get("data");
+
+      if (!data) {
+        return jsonResponse(
+          {
+            success: false,
+            error: "data 없음",
+          },
+          400
+        );
+      }
+
+      try {
+        const parsed = JSON.parse(data);
+
+        await Deno.writeTextFile(
+          MEMODATA_FILE,
+          JSON.stringify(
+            parsed,
+            null,
+            2
+          )
+        );
+
+        console.log(
+          "[Memo] memodata.json 저장 완료"
+        );
+
+        return jsonResponse({
+          success: true,
+        });
+
+      } catch (error) {
+        console.error(
+          "[Memo] 저장 실패:",
+          error
+        );
+
+        return jsonResponse(
+          {
+            success: false,
+            error: "메모 데이터 저장 실패",
+          },
+          500
+        );
+      }
+    }
+
+
+    // ==================================================
+    // 메모 데이터 복원
+    // GET
+    // /app/memorestore/
+    // ==================================================
+
+    if (
+      url.pathname === "/app/memorestore/" &&
+      req.method === "GET"
+    ) {
+      try {
+        const data =
+          await Deno.readTextFile(
+            MEMODATA_FILE
+          );
+
+        JSON.parse(data);
+
+        console.log(
+          "[Memo] memodata.json 불러오기"
+        );
+
+        return new Response(
+          data,
+          {
+            status: 200,
+            headers,
+          }
+        );
+
+      } catch {
+        console.log(
+          "[Memo] memodata.json 없음"
+        );
+
+        return new Response(
+          "[]",
+          {
+            status: 200,
+            headers,
+          }
+        );
+      }
+    }
+
+
+    // ==================================================
+    // memoapp-pages 목록
+    //
+    // GET
+    // /app/memopages/
+    //
+    // 결과:
+    // [
+    //   {
+    //     "name": "markdown.md",
+    //     "content": "..."
+    //   }
+    // ]
+    // ==================================================
+
+    if (
+      url.pathname === "/app/memopages/" &&
+      req.method === "GET"
+    ) {
+      const pages = [];
+
+      try {
+        for await (
+          const entry of Deno.readDir(
+            MEMO_PAGES_DIR
+          )
+        ) {
+          if (
+            entry.isFile &&
+            entry.name.toLowerCase().endsWith(".md")
+          ) {
+            const fileURL = new URL(
+              encodeURIComponent(entry.name),
+              MEMO_PAGES_DIR
+            );
+
+            try {
+              const content =
+                await Deno.readTextFile(
+                  fileURL
+                );
+
+              pages.push({
+                name: entry.name,
+                content,
+              });
+
+            } catch (error) {
+              console.error(
+                `[MemoPages] ${entry.name} 읽기 실패:`,
+                error
+              );
+            }
+          }
+        }
+
+        pages.sort((a, b) =>
+          a.name.localeCompare(
+            b.name,
+            "ko"
+          )
+        );
+
+        console.log(
+          `[MemoPages] ${pages.length}개 파일 전송`
+        );
+
+        return jsonResponse(pages);
+
+      } catch (error) {
+        console.error(
+          "[MemoPages] 폴더 읽기 실패:",
+          error
+        );
+
+        return jsonResponse([]);
+      }
+    }
+
+
+    // ==================================================
+    // 특정 Markdown 파일 하나 가져오기
+    //
+    // GET
+    // /app/memopage/?file=markdown.md
+    // ==================================================
+
+    if (
+      url.pathname === "/app/memopage/" &&
+      req.method === "GET"
+    ) {
+      const filename =
+        url.searchParams.get("file");
+
+      if (!filename) {
+        return jsonResponse(
+          {
+            success: false,
+            error: "file 없음",
+          },
+          400
+        );
+      }
+
+      // .md 파일만 허용
+      if (
+        !filename.toLowerCase().endsWith(".md")
+      ) {
+        return jsonResponse(
+          {
+            success: false,
+            error: "Markdown 파일만 허용됩니다.",
+          },
+          400
+        );
+      }
+
+      // 경로 탈출 방지
+      const safeName =
+        filename
+          .replaceAll("/", "")
+          .replaceAll("\\", "")
+          .replaceAll("..", "");
+
+      try {
+        const fileURL = new URL(
+          encodeURIComponent(safeName),
+          MEMO_PAGES_DIR
+        );
+
+        const content =
+          await Deno.readTextFile(
+            fileURL
+          );
+
+        console.log(
+          `[MemoPages] ${safeName} 전송`
+        );
+
+        return new Response(
+          content,
+          {
+            status: 200,
+            headers: textHeaders,
+          }
+        );
+
+      } catch {
+        return jsonResponse(
+          {
+            success: false,
+            error: "파일을 찾을 수 없습니다.",
+          },
+          404
+        );
+      }
+    }
+
+
+    // ==================================================
+    // userdata 존재 여부 확인
+    // GET
+    // /app/userdata/
+    // ==================================================
+
+    if (
+      url.pathname === "/app/userdata/" &&
+      req.method === "GET"
+    ) {
+      try {
+        const result = [];
+
+        for await (
+          const entry of Deno.readDir(
+            USERDATA_DIR
+          )
+        ) {
+          result.push({
+            name: entry.name,
+            type: entry.isDirectory
+              ? "directory"
+              : "file",
+          });
+        }
+
+        return jsonResponse(result);
+
+      } catch {
+        return jsonResponse([]);
+      }
+    }
+
+
+    // ==================================================
+    // Not Found
+    // ==================================================
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Not Found",
+        path: url.pathname,
+      },
+      404
+    );
+  }
+);

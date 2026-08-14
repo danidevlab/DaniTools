@@ -40,14 +40,6 @@ fetch(
 fetch("http://localhost:4047/getwindowdata/");
 ```
 
-</details>
-
-<details>
-<summary>앱</summary>
-
-<details>
-<summary>체크리스트</summary>
-
 체크리스트 데이터 저장 :
 
 ```js
@@ -63,11 +55,6 @@ fetch(
 fetch("http://localhost:4047/app/checklistrestore/");
 ```
 
-</details>
-
-<details>
-<summary>메모</summary>
-
 메모 데이터 저장 :
 
 ```js
@@ -82,11 +69,6 @@ fetch(
 ```js
 fetch("http://localhost:4047/app/memorestore/");
 ```
-
-</details>
-
-</details>
-
 </details>
 
 <details>
