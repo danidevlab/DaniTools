@@ -2,7 +2,7 @@ import { serveDir } from "jsr:@std/http/file-server";
 
 const CONFIG = {
   port: 5050,
-  frontendDir: "./frontend",
+  frontendDir: "../frontend",
 };
 
 /**
