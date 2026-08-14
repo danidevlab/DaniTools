@@ -1,7 +1,7 @@
 const { exec } = require('child_process');
 
 // 실행할 Deno 명령어 (예: run ../script.js)
-const command = 'deno run 0/front.js';
+const command = 'deno run ./backendutils/frontendhost.js';
 
 exec(command, (error, stdout, stderr) => {
     if (error) {
