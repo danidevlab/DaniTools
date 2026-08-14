@@ -1,16 +1,25 @@
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 
-// 실행할 Deno 명령어 (예: run ../script.js)
-const command = 'deno run ./backendutils/frontendhost.js';
+const scripts = [
+    './backendutils/frontendhost.js',
+    './backendutils/applisten.js',
+    './backendutils/worker.js'
+];
 
-exec(command, (error, stdout, stderr) => {
-    if (error) {
-        console.error(`실행 에러: ${error.message}`);
-        return;
-    }
-    if (stderr) {
-        console.error(`stderr: ${stderr}`);
-        return;
-    }
-    console.log(`출력 결과:\n${stdout}`);
-});
+for (const script of scripts) {
+    const process = spawn('deno', ['run', script], {
+        stdio: ['inherit', 'pipe', 'pipe']
+    });
+
+    process.stdout.on('data', (data) => {
+        console.log(`[${script}] ${data.toString().trim()}`);
+    });
+
+    process.stderr.on('data', (data) => {
+        console.error(`[${script} ERROR] ${data.toString().trim()}`);
+    });
+
+    process.on('close', (code) => {
+        console.log(`[${script}] 종료됨 (code: ${code})`);
+    });
+}
