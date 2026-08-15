@@ -1,9 +1,0 @@
-{
-  "modules": {
-    "https://jsr.io/@std/http/1.1.3/server_sent_event_parse_stream.ts": {},
-    "https://jsr.io/@std/http/1.1.3/unstable_formdata_decoder_stream.ts": {},
-    "https://jsr.io/@std/http/1.1.3/unstable_formdata_encoder_stream.ts": {},
-    "https://jsr.io/@std/net/1.0.6/unstable_get_network_address.ts": {},
-    "https://jsr.io/@std/streams/1.1.2/unstable_capped_delimiter_stream.ts": {}
-  }
-}

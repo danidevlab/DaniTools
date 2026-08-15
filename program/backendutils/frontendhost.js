@@ -1,4 +1,4 @@
-import { serveDir } from "jsr:@std/http/file-server";
+import { serveDir } from "./lib/file-server.js";
 
 const CONFIG = {
   port: 5050,
