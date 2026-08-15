@@ -1,25 +1,39 @@
-const { spawn } = require('child_process');
-
 const scripts = [
-    './backendutils/frontendhost.js',
-    './backendutils/applisten.js',
-    './backendutils/worker.js'
+    "./backendutils/frontendhost.js",
+    "./backendutils/applisten.js",
+    "./backendutils/worker.js"
 ];
 
 for (const script of scripts) {
-    const process = spawn('deno', ['run', script], {
-        stdio: ['inherit', 'pipe', 'pipe']
+    const command = new Deno.Command("deno", {
+        args: ["run", script],
+        stdout: "piped",
+        stderr: "piped"
     });
 
-    process.stdout.on('data', (data) => {
-        console.log(`[${script}] ${data.toString().trim()}`);
-    });
+    const child = command.spawn();
 
-    process.stderr.on('data', (data) => {
-        console.error(`[${script} ERROR] ${data.toString().trim()}`);
-    });
+    (async () => {
+        for await (const chunk of child.stdout) {
+            const text = new TextDecoder().decode(chunk).trim();
+            if (text) {
+                console.log(`[${script}] ${text}`);
+            }
+        }
+    })();
 
-    process.on('close', (code) => {
-        console.log(`[${script}] 종료됨 (code: ${code})`);
+    (async () => {
+        for await (const chunk of child.stderr) {
+            const text = new TextDecoder().decode(chunk).trim();
+            if (text) {
+                console.error(`[${script} ERROR] ${text}`);
+            }
+        }
+    })();
+
+    child.status.then((status) => {
+        console.log(
+            `[${script}] 종료됨 (code: ${status.code})`
+        );
     });
 }
