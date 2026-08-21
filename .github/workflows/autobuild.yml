@@ -1,20 +1,27 @@
 name: Deno Multi-Job Release
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '릴리즈할 버전 (예: v1.0.0)'
+        required: true
+        type: string
 
 jobs:
-  # 1. 준비 단계
+  # 1. 준비 단계 (수동 입력받은 버전 활용)
   prepare:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.tag }}
     steps:
-      - name: 태그 이름 확인
+      - name: 버전 확인
         id: version
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: |
+          # 입력받은 버전 값 출력 및 확인
+          VERSION="${{ inputs.version }}"
+          echo "tag=$VERSION" >> $GITHUB_OUTPUT
+          echo "릴리즈 버전: $VERSION"
 
   # 2. 리눅스 빌드 단계
   build-linux:
@@ -48,9 +55,9 @@ jobs:
           name: windows-bin
           path: my-app-windows.exe
 
-  # 4. 릴리즈 단계 (모든 빌드가 끝나면 실행)
+  # 4. 릴리즈 단계
   release:
-    needs: [build-linux, build-windows]
+    needs: [prepare, build-linux, build-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -61,6 +68,7 @@ jobs:
       - name: 깃허브 릴리즈 생성 및 업로드
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.prepare.outputs.version }}
           files: |
             linux-bin/my-app-linux
             windows-bin/my-app-windows.exe
