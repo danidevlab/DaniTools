@@ -67,6 +67,12 @@ fetch(
 ```js
 fetch("http://localhost:4047/app/memorestore/");
 ```
+
+버전 정보 체크 :
+
+```js
+fetch("http://localhost:4047/version/");
+```
 </details>
 
 <details>
