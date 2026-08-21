@@ -1,4 +1,4 @@
-import { serveDir } from "./lib/file-server.js";
+import { serveDir } from "jsr:@std/http/file-server";
 
 // ======================================================
 // 설정 및 경로 정의
@@ -7,13 +7,13 @@ import { serveDir } from "./lib/file-server.js";
 const CONFIG = {
   frontendPort: 5050,
   apiPort: 4047,
-  frontendDir: "../frontend",
+  frontendDir: "./frontend",
 };
 
-const USERDATA_DIR = new URL("../userdata/", import.meta.url);
-const WINDOWDATA_FILE = new URL("../userdata/windowdata.json", import.meta.url);
-const MEMODATA_FILE = new URL("../userdata/memodata.json", import.meta.url);
-const MEMO_PAGES_DIR = new URL("../userdata/memoapp-pages/", import.meta.url);
+const USERDATA_DIR = new URL("./userdata/", import.meta.url);
+const WINDOWDATA_FILE = new URL("./userdata/windowdata.json", import.meta.url);
+const MEMODATA_FILE = new URL("./userdata/memodata.json", import.meta.url);
+const MEMO_PAGES_DIR = new URL("./userdata/memoapp-pages/", import.meta.url);
 
 const headers = {
   "Content-Type": "application/json; charset=utf-8",
